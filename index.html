@@ -740,6 +740,8 @@ var DAYS = ['MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY','SUNDA
 var map = L.map('map', { center:[51.505,-0.12], zoom:11 });
 L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { attribution:'&copy; OSM &copy; CartoDB', maxZoom:19 }).addTo(map);
 
+// Tooltip→marker wiring done per-marker in render()
+
 // Spinner
 var sp = document.querySelector('.spinner'), sa = 0;
 var si = setInterval(function(){ sa=(sa+10)%360; sp.style.transform='rotate('+sa+'deg)'; }, 16);
@@ -779,15 +781,24 @@ function render() {
       .bindPopup(popup(v),{maxWidth:300})
       .bindTooltip(v.name,{permanent:true,direction:'top',offset:[0,-28],opacity:1,className:'v-tip v-tip-hide'})
       .addTo(map);
-    // Make tooltip open popup when tapped — attach after render
-    m.on('add', function() {
-      var tip = m.getTooltip();
-      if (!tip) return;
-      var el = tip.getElement();
-      if (!el) return;
-      el.addEventListener('click', function(e) { e.stopPropagation(); m.openPopup(); });
-      el.addEventListener('touchstart', function(e) { e.stopPropagation(); m.openPopup(); });
-    });
+    // Wire tooltip click directly to this specific marker
+    (function(marker) {
+      setTimeout(function() {
+        var tip = marker.getTooltip();
+        if (!tip) return;
+        var el = tip.getElement();
+        if (!el) return;
+        el.addEventListener('click', function(e) {
+          e.stopPropagation();
+          marker.openPopup();
+        });
+        el.addEventListener('touchend', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          marker.openPopup();
+        });
+      }, 50);
+    })(m);
     markers.push(m);
   }
   updateTips();
@@ -989,7 +1000,7 @@ function renderList() {
     byDay[d].forEach(function(v) {
       var mapsUrl = 'https://maps.google.com/?q=' + encodeURIComponent(v.name + ', ' + v.location);
       var meta = '';
-      if (v.time) meta += '<span>⏰ ' + v.time + '</span>';
+      if (v.time) meta += '<span>🕐 ' + v.time + '</span>';
       meta += '<span>📍 ' + v.location + '</span>';
 
       var bodyRows = '';
