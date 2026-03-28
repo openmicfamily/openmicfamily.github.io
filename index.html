@@ -620,11 +620,25 @@
   </header>
 
   <div class="search-bar">
-    <span class="search-icon">🔍</span>
-    <input type="text" id="searchInput" placeholder="Search venues...">
-    <button class="search-x" id="searchX">✕</button>
-    <div class="search-results" id="searchResults"></div>
+  <div style="display:flex;gap:8px;align-items:center;">
+    <div class="search-inner" id="searchWrap" style="flex:1;position:relative;">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="searchInput" placeholder="Search venues...">
+      <button class="search-x" id="searchX">✕</button>
+      <div class="search-results" id="searchResults"></div>
+    </div>
+    <div class="view-toggle">
+      <button class="view-btn active" id="mapViewBtn" title="Map view">🌍</button>
+      <button class="view-btn" id="listViewBtn" title="List view">
+        <svg width="16" height="14" viewBox="0 0 16 14" fill="currentColor">
+          <circle cx="2" cy="2" r="1.5"/><rect x="5" y="1" width="11" height="2" rx="1"/>
+          <circle cx="2" cy="7" r="1.5"/><rect x="5" y="6" width="11" height="2" rx="1"/>
+          <circle cx="2" cy="12" r="1.5"/><rect x="5" y="11" width="11" height="2" rx="1"/>
+        </svg>
+      </button>
+    </div>
   </div>
+</div>
 
   <div id="map"></div>
 <div id="listView"></div>
@@ -897,12 +911,10 @@ document.getElementById('locBtn').addEventListener('click', function() {
 var currentView = 'map';
 var DAYS_ORDER = ['MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY','SUNDAY'];
 
-document.getElementById('mapViewBtn').addEventListener('click', function() {
-  setView('map');
-});
-document.getElementById('listViewBtn').addEventListener('click', function() {
-  setView('list');
-});
+var mapViewBtn = document.getElementById('mapViewBtn');
+var listViewBtn = document.getElementById('listViewBtn');
+if (mapViewBtn) mapViewBtn.addEventListener('click', function() { setView('map'); });
+if (listViewBtn) listViewBtn.addEventListener('click', function() { setView('list'); });
 
 function setView(v) {
   currentView = v;
