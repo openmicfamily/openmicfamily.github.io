@@ -916,14 +916,14 @@ function setView(v) {
   var mapBtn = document.getElementById('mapViewBtn');
   var listBtn = document.getElementById('listViewBtn');
   if (v === 'map') {
-    mapEl.style.display = '';
+    mapEl.style.display = 'block';
     listEl.style.display = 'none';
     locBtn.style.display = '';
     mapBtn.classList.add('active');
     listBtn.classList.remove('active');
   } else {
     mapEl.style.display = 'none';
-    listEl.style.display = '';
+    listEl.style.display = 'block';
     locBtn.style.display = 'none';
     mapBtn.classList.remove('active');
     listBtn.classList.add('active');
