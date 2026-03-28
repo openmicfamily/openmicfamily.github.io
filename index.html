@@ -196,7 +196,7 @@
   .drawer-backdrop {
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.6);
+    background: rgba(0,0,0,0.5);
     z-index: 1000;
     display: none;
     opacity: 0;
@@ -207,23 +207,20 @@
 
   .drawer {
     position: fixed;
-    bottom: 0; left: 0; right: 0;
+    top: 0; right: 0; bottom: 0;
+    width: min(320px, 85vw);
     background: var(--surface);
-    border-radius: 28px 28px 0 0;
+    border-radius: 20px 0 0 20px;
     z-index: 1001;
-    transform: translateY(100%);
+    transform: translateX(100%);
     transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+    overflow-y: auto;
     padding-bottom: env(safe-area-inset-bottom, 20px);
   }
 
-  .drawer.show { transform: translateY(0); }
+  .drawer.show { transform: translateX(0); }
 
-  .drawer-handle {
-    width: 48px; height: 5px;
-    background: var(--border);
-    border-radius: 3px;
-    margin: 14px auto 20px;
-  }
+  .drawer-handle { display: none; }
 
   .drawer-title {
     font-size: 0.8rem;
@@ -239,6 +236,25 @@
     flex-direction: column;
     gap: 0;
     padding: 0 16px 16px;
+  }
+
+  .drawer-close-row {
+    display: flex;
+    justify-content: flex-end;
+    padding: 16px 16px 8px;
+  }
+
+  .drawer-close-btn {
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    border-radius: 50%;
+    width: 36px; height: 36px;
+    color: var(--text);
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .day-item {
@@ -425,6 +441,164 @@
   .v-tip-hide { display: none !important; }
 
   .loc-popup { padding: 12px 16px; font-family: 'DM Sans', sans-serif; font-size: 0.95rem; color: #333; }
+
+  /* ── LIST VIEW ── */
+  .view-toggle {
+    display: flex;
+    gap: 4px;
+    background: var(--surface2);
+    border-radius: 10px;
+    padding: 3px;
+    flex-shrink: 0;
+  }
+
+  .view-btn {
+    width: 34px; height: 30px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    transition: all 0.15s;
+  }
+
+  .view-btn.active {
+    background: var(--surface);
+    color: var(--text);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+  }
+
+  #listView {
+    flex: 1;
+    overflow-y: auto;
+    display: none;
+    background: var(--bg);
+  }
+
+  .list-day-header {
+    padding: 14px 16px 8px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    background: var(--bg);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .list-day-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .venue-card {
+    margin: 0 12px 8px;
+    background: var(--surface);
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color 0.15s;
+  }
+
+  .venue-card:active { border-color: var(--accent); }
+
+  .venue-card-header {
+    padding: 14px 16px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .venue-card-dot {
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 4px;
+  }
+
+  .venue-card-main { flex: 1; min-width: 0; }
+
+  .venue-card-name {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .venue-card-meta {
+    font-size: 0.82rem;
+    color: var(--muted);
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .venue-card-chevron {
+    color: var(--muted);
+    font-size: 0.8rem;
+    flex-shrink: 0;
+    margin-top: 2px;
+    transition: transform 0.2s;
+  }
+
+  .venue-card.open .venue-card-chevron { transform: rotate(180deg); }
+
+  .venue-card-body {
+    display: none;
+    padding: 0 16px 14px 40px;
+    border-top: 1px solid var(--border);
+  }
+
+  .venue-card.open .venue-card-body { display: block; }
+
+  .venue-card-row {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: var(--text);
+    padding: 5px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .venue-card-row:last-of-type { border-bottom: none; }
+
+  .venue-card-icon { flex-shrink: 0; width: 18px; text-align: center; color: var(--muted); }
+
+  .venue-maps-btn {
+    display: block;
+    margin-top: 12px;
+    padding: 11px;
+    background: var(--accent);
+    color: #000;
+    text-align: center;
+    border-radius: 10px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  .list-empty {
+    padding: 60px 20px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.95rem;
+  }
 </style>
 </head>
 <body>
@@ -439,7 +613,11 @@
   <header>
     <h1>London <em>Open Mics</em></h1>
 
-    <button class="hdr-btn" id="filterBtn">
+    <div class="view-toggle">
+    <button class="view-btn active" id="mapViewBtn" title="Map view">🗺</button>
+    <button class="view-btn" id="listViewBtn" title="List view">☰</button>
+  </div>
+  <button class="hdr-btn" id="filterBtn">
       ☰
       <div class="day-badge" id="dayBadge"></div>
     </button>
@@ -453,6 +631,7 @@
   </div>
 
   <div id="map"></div>
+<div id="listView"></div>
 <button id="locBtn" title="Go to my location" style="
   position:fixed;
   bottom:32px;
@@ -481,8 +660,8 @@
 <!-- Filter drawer -->
 <div class="drawer-backdrop" id="backdrop"></div>
 <div class="drawer" id="drawer">
-  <div class="drawer-handle"></div>
-  <div class="drawer-title">Filter by day</div>
+  <div class="drawer-close-row"><button class="drawer-close-btn" id="drawerCloseBtn">✕</button></div>
+  <div class="drawer-title" style="padding: 0 20px 16px;">Filter by day</div>
   <div class="day-list" id="dayList">
     <div class="day-item active" data-day="ALL">
       <div class="day-dot" style="background:var(--accent)"></div>
@@ -620,6 +799,7 @@ function closeDrawer(){ drawer.classList.remove('show'); backdrop.classList.remo
 
 filterBtn.addEventListener('click',function(){ drawer.classList.contains('show')?closeDrawer():openDrawer(); });
 backdrop.addEventListener('click',closeDrawer);
+document.getElementById('drawerCloseBtn').addEventListener('click',closeDrawer);
 
 document.getElementById('dayList').addEventListener('click',function(e){
   var item=e.target.closest('.day-item');
@@ -628,10 +808,12 @@ document.getElementById('dayList').addEventListener('click',function(e){
   item.classList.add('active');
   activeDay=item.dataset.day;
   render();
+  if(currentView==="list") renderList();
   // Update badge
   var badge=document.getElementById('dayBadge');
+  var dayShorts={MONDAY:'Mo',TUESDAY:'Tu',WEDNESDAY:'We',THURSDAY:'Th',FRIDAY:'Fr',SATURDAY:'Sa',SUNDAY:'Su'};
   if(activeDay==='ALL'){ badge.style.display='none'; }
-  else { badge.style.display='flex'; badge.textContent=activeDay.slice(0,1); }
+  else { badge.style.display='flex'; badge.textContent=dayShorts[activeDay]||activeDay.slice(0,2); }
   closeDrawer();
 });
 
@@ -669,7 +851,7 @@ searchInput.addEventListener('input',function(){
   render();
 });
 
-searchX.addEventListener('click',function(){ searchInput.value=''; filter=''; searchX.style.display='none'; searchResults.style.display='none'; render(); });
+searchX.addEventListener('click',function(){ searchInput.value=''; filter=''; searchX.style.display='none'; searchResults.style.display='none'; render(); if(currentView==="list") renderList(); });
 document.addEventListener('click',function(e){ if(!searchInput.contains(e.target)&&!searchResults.contains(e.target)) searchResults.style.display='none'; });
 
 // ── LOCATION ──
@@ -713,6 +895,111 @@ document.getElementById('locBtn').addEventListener('click', function() {
     locate(true);
   }
 });
+
+
+// ── LIST VIEW ──
+var currentView = 'map';
+var DAYS_ORDER = ['MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY','SUNDAY'];
+
+document.getElementById('mapViewBtn').addEventListener('click', function() {
+  setView('map');
+});
+document.getElementById('listViewBtn').addEventListener('click', function() {
+  setView('list');
+});
+
+function setView(v) {
+  currentView = v;
+  var mapEl = document.getElementById('map');
+  var listEl = document.getElementById('listView');
+  var locBtn = document.getElementById('locBtn');
+  var mapBtn = document.getElementById('mapViewBtn');
+  var listBtn = document.getElementById('listViewBtn');
+  if (v === 'map') {
+    mapEl.style.display = '';
+    listEl.style.display = 'none';
+    locBtn.style.display = '';
+    mapBtn.classList.add('active');
+    listBtn.classList.remove('active');
+  } else {
+    mapEl.style.display = 'none';
+    listEl.style.display = '';
+    locBtn.style.display = 'none';
+    mapBtn.classList.remove('active');
+    listBtn.classList.add('active');
+    renderList();
+  }
+}
+
+function renderList() {
+  var listEl = document.getElementById('listView');
+  var q = filter.toLowerCase();
+  var filtered = venues.filter(function(v) {
+    var dayMatch = activeDay === 'ALL' || v.day === activeDay;
+    var nameMatch = !q || v.name.toLowerCase().indexOf(q) !== -1 || v.location.toLowerCase().indexOf(q) !== -1;
+    return dayMatch && nameMatch;
+  });
+
+  if (!filtered.length) {
+    listEl.innerHTML = '<div class="list-empty">No venues found</div>';
+    return;
+  }
+
+  // Group by day
+  var byDay = {};
+  DAYS_ORDER.forEach(function(d) { byDay[d] = []; });
+  filtered.forEach(function(v) { if (byDay[v.day]) byDay[v.day].push(v); });
+
+  // Sort each day by time
+  DAYS_ORDER.forEach(function(d) {
+    byDay[d].sort(function(a, b) { return (a.time || 'zzz').localeCompare(b.time || 'zzz'); });
+  });
+
+  var html = '';
+  DAYS_ORDER.forEach(function(d) {
+    if (!byDay[d].length) return;
+    var colour = COLOURS[d] || '#888';
+    var label = d.charAt(0) + d.slice(1).toLowerCase();
+    html += '<div class="list-day-header"><div class="list-day-dot" style="background:' + colour + '"></div>' + label + '</div>';
+    byDay[d].forEach(function(v) {
+      var mapsUrl = 'https://maps.google.com/?q=' + encodeURIComponent(v.name + ', ' + v.location);
+      var meta = '';
+      if (v.time) meta += '<span>⏰ ' + v.time + '</span>';
+      meta += '<span>📍 ' + v.location + '</span>';
+
+      var bodyRows = '';
+      if (v.frequency) bodyRows += '<div class="venue-card-row"><span class="venue-card-icon">🔁</span><span>' + v.frequency + '</span></div>';
+      if (v.style)     bodyRows += '<div class="venue-card-row"><span class="venue-card-icon">🎵</span><span>' + v.style + '</span></div>';
+      if (v.equipment) bodyRows += '<div class="venue-card-row"><span class="venue-card-icon">🎸</span><span>' + v.equipment + '</span></div>';
+      if (v.notes)     bodyRows += '<div class="venue-card-row"><span class="venue-card-icon">📝</span><span>' + v.notes + '</span></div>';
+      if (v.contact)   bodyRows += '<div class="venue-card-row"><span class="venue-card-icon">📞</span><span>' + v.contact + '</span></div>';
+      if (v.instagram) bodyRows += '<div class="venue-card-row"><span class="venue-card-icon">📷</span><span>' + v.instagram + '</span></div>';
+      if (v.backingTracks) bodyRows += '<div class="venue-card-row"><span class="venue-card-icon">🎶</span><span>Backing tracks: ' + v.backingTracks + '</span></div>';
+      if (v.under18s)  bodyRows += '<div class="venue-card-row"><span class="venue-card-icon">👶</span><span>' + v.under18s + '</span></div>';
+
+      html += '<div class="venue-card" onclick="toggleCard(this)">' +
+        '<div class="venue-card-header">' +
+          '<div class="venue-card-dot" style="background:' + colour + '"></div>' +
+          '<div class="venue-card-main">' +
+            '<div class="venue-card-name">' + v.name + '</div>' +
+            '<div class="venue-card-meta">' + meta + '</div>' +
+          '</div>' +
+          '<div class="venue-card-chevron">▼</div>' +
+        '</div>' +
+        '<div class="venue-card-body">' +
+          bodyRows +
+          '<a class="venue-maps-btn" href="' + mapsUrl + '" target="_blank" onclick="event.stopPropagation()">Open in Google Maps →</a>' +
+        '</div>' +
+      '</div>';
+    });
+  });
+
+  listEl.innerHTML = html;
+}
+
+function toggleCard(card) {
+  card.classList.toggle('open');
+}
 
 // ── LOAD ──
 var xhr = new XMLHttpRequest();
