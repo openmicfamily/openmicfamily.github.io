@@ -445,7 +445,7 @@
   /* ── LIST VIEW ── */
   .view-toggle {
     display: flex;
-    gap: 4px;
+    gap: 3px;
     background: var(--surface2);
     border-radius: 10px;
     padding: 3px;
@@ -453,7 +453,7 @@
   }
 
   .view-btn {
-    width: 34px; height: 30px;
+    width: 36px; height: 34px;
     border: none;
     border-radius: 8px;
     background: transparent;
@@ -462,7 +462,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1rem;
+    font-size: 1.1rem;
     transition: all 0.15s;
   }
 
@@ -613,11 +613,7 @@
   <header>
     <h1>London <em>Open Mics</em></h1>
 
-    <div class="view-toggle">
-    <button class="view-btn active" id="mapViewBtn" title="Map view">🗺</button>
-    <button class="view-btn" id="listViewBtn" title="List view">☰</button>
-  </div>
-  <button class="hdr-btn" id="filterBtn">
+    <button class="hdr-btn" id="filterBtn">
       ☰
       <div class="day-badge" id="dayBadge"></div>
     </button>
