@@ -382,8 +382,27 @@
     100% { box-shadow: 0 0 0 3px rgba(66,133,244,0.35); }
   }
 
-  /* ── MARKER ── */
-  .m-dot { width: 22px; height: 22px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+  /* ── MARKER (teardrop) ── */
+  .m-pin {
+    width: 28px;
+    height: 36px;
+    border-radius: 50% 50% 50% 0;
+    transform: rotate(-45deg);
+    border: 3px solid #fff;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.35);
+    position: relative;
+  }
+  .m-pin::after {
+    content: '';
+    width: 10px;
+    height: 10px;
+    background: rgba(255,255,255,0.5);
+    border-radius: 50%;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
 
   /* ── TOOLTIP ── */
   .v-tip { background: rgba(15,15,15,0.9); color: #f0ece4; border: none; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.8rem; font-weight: 500; padding: 5px 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.4); white-space: nowrap; }
@@ -404,7 +423,13 @@
 
   <header>
     <h1>London Open <em>Mics</em></h1>
-    <button class="hdr-btn" id="locBtn">📍</button>
+    <button class="hdr-btn loc-btn" id="locBtn" title="Go to my location">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
+        <circle cx="12" cy="12" r="8" stroke-dasharray="2 4"/>
+      </svg>
+    </button>
     <button class="hdr-btn" id="filterBtn">
       ☰
       <div class="day-badge" id="dayBadge"></div>
@@ -485,7 +510,7 @@ var venues=[], markers=[], activeDay='ALL', filter='', locMarker=null;
 
 // ── MARKERS ──
 function icon(day) {
-  return L.divIcon({ className:'', html:'<div class="m-dot" style="background:'+(COLOURS[day]||'#888')+'"></div>', iconSize:[22,22], iconAnchor:[11,11], popupAnchor:[0,-14] });
+  return L.divIcon({ className:'', html:'<div style="width:44px;height:52px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px"><div class="m-pin" style="background:'+(COLOURS[day]||'#888')+'"></div></div>', iconSize:[44,52], iconAnchor:[22,52], popupAnchor:[0,-52] });
 }
 
 function tc(s){ return s ? s[0].toUpperCase()+s.slice(1).toLowerCase() : ''; }
@@ -623,22 +648,27 @@ function locate(pan){
 
 document.getElementById('locBtn').addEventListener('click',function(){ locate(true); });
 
-// ── LOAD ──
-var xhr=new XMLHttpRequest();
-xhr.open('GET','https://script.google.com/macros/s/AKfycbzzky7_wAt1wdRRJDGF_OHA55dyXhuxolhUtLm_RG-fuKcCYsxVNf9p3Av82eOvNn3A_A/exec?format=json');
-xhr.onload=function(){
-  if(xhr.status===200){
-    try{
-      venues=JSON.parse(xhr.responseText);
-      render();
-      document.getElementById('loading').style.display='none';
-      clearInterval(si);
-      locate(true);
-    }catch(e){ document.getElementById('loading').innerHTML='<h2>Error</h2><p>'+e.message+'</p>'; }
-  }
+// ── LOAD via JSONP (bypasses CORS) ──
+var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzzky7_wAt1wdRRJDGF_OHA55dyXhuxolhUtLm_RG-fuKcCYsxVNf9p3Av82eOvNn3A_A/exec';
+
+window.onVenuesLoaded = function(data) {
+  venues = data;
+  render();
+  document.getElementById('loading').style.display = 'none';
+  clearInterval(si);
+  locate(true);
 };
-xhr.onerror=function(){ document.getElementById('loading').innerHTML='<h2>Could not load</h2><p>Network error</p>'; };
-xhr.send();
+
+function loadVenuesJSONP() {
+  var script = document.createElement('script');
+  script.src = SCRIPT_URL + '?format=json&callback=onVenuesLoaded';
+  script.onerror = function() {
+    document.getElementById('loading').innerHTML = '<h2>Could not load</h2><p>Network error</p>';
+  };
+  document.head.appendChild(script);
+}
+
+loadVenuesJSONP();
 </script>
 </body>
 </html>
