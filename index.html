@@ -101,7 +101,7 @@
 
   /* ── SEARCH ── */
   .search-bar {
-    padding: 12px 16px;
+    padding: 8px 16px;
     background: var(--surface);
     border-bottom: 1px solid var(--border);
     flex-shrink: 0;
@@ -126,10 +126,10 @@
 
   .search-icon {
     position: absolute;
-    left: 30px;
+    left: 28px;
     top: 50%;
     transform: translateY(-50%);
-    font-size: 1.1rem;
+    font-size: 0.95rem;
     pointer-events: none;
     color: var(--muted);
   }
@@ -384,19 +384,19 @@
 
   /* ── MARKER (teardrop) ── */
   .m-pin {
-    width: 28px;
-    height: 36px;
+    width: 24px;
+    height: 24px;
     border-radius: 50% 50% 50% 0;
     transform: rotate(-45deg);
-    border: 3px solid #fff;
-    box-shadow: 0 3px 10px rgba(0,0,0,0.35);
+    border: 2.5px solid #fff;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.35);
     position: relative;
   }
   .m-pin::after {
     content: '';
-    width: 10px;
-    height: 10px;
-    background: rgba(255,255,255,0.5);
+    width: 8px;
+    height: 8px;
+    background: rgba(255,255,255,0.45);
     border-radius: 50%;
     position: absolute;
     top: 50%;
@@ -510,7 +510,7 @@ var venues=[], markers=[], activeDay='ALL', filter='', locMarker=null;
 
 // ── MARKERS ──
 function icon(day) {
-  return L.divIcon({ className:'', html:'<div style="width:44px;height:52px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px"><div class="m-pin" style="background:'+(COLOURS[day]||'#888')+'"></div></div>', iconSize:[44,52], iconAnchor:[22,52], popupAnchor:[0,-52] });
+  return L.divIcon({ className:'', html:'<div style="width:40px;height:40px;display:flex;align-items:center;justify-content:center"><div class="m-pin" style="background:'+(COLOURS[day]||'#888')+'"></div></div>', iconSize:[40,40], iconAnchor:[20,34], popupAnchor:[0,-34] });
 }
 
 function tc(s){ return s ? s[0].toUpperCase()+s.slice(1).toLowerCase() : ''; }
@@ -633,20 +633,46 @@ searchX.addEventListener('click',function(){ searchInput.value=''; filter=''; se
 document.addEventListener('click',function(e){ if(!searchInput.contains(e.target)&&!searchResults.contains(e.target)) searchResults.style.display='none'; });
 
 // ── LOCATION ──
-function locate(pan){
-  if(!navigator.geolocation) return;
-  navigator.geolocation.getCurrentPosition(function(pos){
-    var lat=pos.coords.latitude, lng=pos.coords.longitude;
-    if(locMarker) map.removeLayer(locMarker);
-    locMarker=L.marker([lat,lng],{
-      icon:L.divIcon({className:'',html:'<div class="loc-dot"></div>',iconSize:[14,14],iconAnchor:[7,7]}),
-      zIndexOffset:1000
-    }).addTo(map).bindPopup('<div class="loc-popup">📍 You are here</div>',{closeButton:false});
-    if(pan) map.setView([lat,lng],11);
-  },function(){});
+var lastLat = null, lastLng = null;
+
+function placeLocMarker(lat, lng, pan) {
+  lastLat = lat; lastLng = lng;
+  if(locMarker) map.removeLayer(locMarker);
+  locMarker = L.marker([lat, lng], {
+    icon: L.divIcon({className:'', html:'<div class="loc-dot"></div>', iconSize:[14,14], iconAnchor:[7,7]}),
+    zIndexOffset: 1000
+  }).addTo(map).bindPopup('<div class="loc-popup">📍 You are here</div>', {closeButton:false});
+  if(pan) map.setView([lat, lng], 11);
 }
 
-document.getElementById('locBtn').addEventListener('click',function(){ locate(true); });
+function locate(pan) {
+  if(!navigator.geolocation) return;
+  // If we already have a location, use it instantly then refresh in background
+  if(lastLat && pan) map.setView([lastLat, lastLng], 11);
+  navigator.geolocation.getCurrentPosition(
+    function(pos) { placeLocMarker(pos.coords.latitude, pos.coords.longitude, pan && !lastLat); },
+    function() {},
+    { maximumAge: 30000, timeout: 10000, enableHighAccuracy: false }
+  );
+}
+
+// Watch position continuously in background for fast updates
+if(navigator.geolocation) {
+  navigator.geolocation.watchPosition(
+    function(pos) { placeLocMarker(pos.coords.latitude, pos.coords.longitude, false); },
+    function() {},
+    { maximumAge: 10000, timeout: 15000, enableHighAccuracy: false }
+  );
+}
+
+document.getElementById('locBtn').addEventListener('click', function() {
+  if(lastLat) {
+    // Already have location — pan instantly
+    map.setView([lastLat, lastLng], 11);
+  } else {
+    locate(true);
+  }
+});
 
 // ── LOAD ──
 var xhr = new XMLHttpRequest();
