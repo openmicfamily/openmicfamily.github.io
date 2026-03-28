@@ -573,6 +573,14 @@ function render() {
       .bindPopup(popup(v),{maxWidth:300})
       .bindTooltip(v.name,{permanent:true,direction:'top',offset:[0,-28],opacity:1,className:'v-tip v-tip-hide'})
       .addTo(map);
+    // Make tooltip open the popup when tapped
+    m.on('tooltipopen', function(e) {
+      var el = e.tooltip.getElement();
+      if (el) {
+        el.addEventListener('click', function() { m.openPopup(); });
+        el.addEventListener('touchend', function(ev) { ev.preventDefault(); m.openPopup(); });
+      }
+    });
     markers.push(m);
   }
   updateTips();
