@@ -272,8 +272,9 @@
 
     <div class="row-2">
       <div class="field">
-        <label>Email <span class="hint">optional</span></label>
-        <input type="email" name="email" placeholder="host@example.com">
+        <label>Email <span class="hint" id="emailHint">optional</span><span class="req" id="emailReq" style="display:none">*</span></label>
+        <input type="email" name="email" id="emailField" placeholder="host@example.com">
+        <div class="field-error" id="err-email">Hosts must provide an email so we can send confirmation requests</div>
       </div>
 
       <div class="field">
@@ -292,10 +293,11 @@
 
       <div class="field">
         <label>Your role</label>
-        <select name="submitterRole">
+        <select name="submitterRole" required>
+          <option value="">Select your role...</option>
           <option value="Host">I host this open mic</option>
           <option value="Attendee">I attend as a performer</option>
-          <option value="Other">Other</option>
+          <option value="Other">Other / not sure</option>
         </select>
       </div>
     </div>
@@ -314,6 +316,14 @@ var form = document.getElementById('venueForm');
 var submitBtn = document.getElementById('submitBtn');
 var result = document.getElementById('result');
 
+// Show email as required when Host is selected
+document.querySelector('[name="submitterRole"]').addEventListener('change', function() {
+  var isHost = this.value === 'Host';
+  document.getElementById('emailHint').style.display = isHost ? 'none' : '';
+  document.getElementById('emailReq').style.display = isHost ? 'inline' : 'none';
+  document.getElementById('emailField').required = isHost;
+});
+
 form.addEventListener('submit', function(e) {
   e.preventDefault();
 
@@ -322,7 +332,20 @@ form.addEventListener('submit', function(e) {
 
   // Validate required fields
   var valid = true;
-  ['name', 'location', 'day', 'startTime'].forEach(function(field) {
+  // Validate email if host
+  var roleEl = form.querySelector('[name="submitterRole"]');
+  var emailEl = form.querySelector('[name="email"]');
+  var emailErr = document.getElementById('err-email');
+  if (roleEl.value === 'Host' && !emailEl.value.trim()) {
+    emailErr.style.display = 'block';
+    emailEl.style.borderColor = 'var(--error)';
+    valid = false;
+  } else {
+    emailErr.style.display = 'none';
+    emailEl.style.borderColor = '';
+  }
+
+  ['name', 'location', 'day', 'startTime', 'submitterRole'].forEach(function(field) {
     var el = form.querySelector('[name="' + field + '"]');
     var err = document.getElementById('err-' + field);
     if (!el.value.trim()) {
