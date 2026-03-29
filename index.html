@@ -408,26 +408,9 @@
     100% { box-shadow: 0 0 0 3px rgba(66,133,244,0.35); }
   }
 
-  /* ── MARKER (teardrop) ── */
-  .m-pin {
-    width: 24px;
-    height: 24px;
-    border-radius: 50% 50% 50% 0;
-    transform: rotate(-45deg);
-    border: 2.5px solid #fff;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.35);
-    position: relative;
-  }
-  .m-pin::after {
-    content: '';
-    width: 8px;
-    height: 8px;
-    background: rgba(255,255,255,0.45);
-    border-radius: 50%;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+  /* ── MARKER (classic Google pin shape) ── */
+  .m-pin svg {
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.35));
   }
 
   /* ── TOOLTIP ── */
@@ -750,7 +733,13 @@ var venues=[], markers=[], activeDay='ALL', filter='', locMarker=null;
 
 // ── MARKERS ──
 function icon(day) {
-  return L.divIcon({ className:'', html:'<div style="width:40px;height:40px;display:flex;align-items:center;justify-content:center"><div class="m-pin" style="background:'+(COLOURS[day]||'#888')+'"></div></div>', iconSize:[40,40], iconAnchor:[20,34], popupAnchor:[0,-34] });
+  var c = COLOURS[day] || '#888';
+  var svg = '<svg width="22" height="30" viewBox="0 0 20 28" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+    '<path d="M10 0C4.477 0 0 4.477 0 10c0 7.5 10 18 10 18S20 17.5 20 10C20 4.477 15.523 0 10 0z" fill="' + c + '"/>' +
+    '<circle cx="10" cy="10" r="4" fill="rgba(255,255,255,0.35)"/>' +
+    '<path d="M10 0C4.477 0 0 4.477 0 10c0 7.5 10 18 10 18S20 17.5 20 10C20 4.477 15.523 0 10 0z" fill="none" stroke="white" stroke-width="1.5"/>' +
+    '</svg>';
+  return L.divIcon({ className:'m-pin', html:'<div style="width:44px;height:44px;display:flex;align-items:center;justify-content:center">' + svg + '</div>', iconSize:[44,44], iconAnchor:[22,40], popupAnchor:[0,-40] });
 }
 
 function tc(s){ return s ? s[0].toUpperCase()+s.slice(1).toLowerCase() : ''; }
