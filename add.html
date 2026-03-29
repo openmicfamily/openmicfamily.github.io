@@ -1,0 +1,394 @@
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Add an Open Mic — London Open Mics</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  :root {
+    --bg: #0f0f0f;
+    --surface: #1a1a1a;
+    --surface2: #242424;
+    --border: #2e2e2e;
+    --text: #f0ece4;
+    --muted: #888;
+    --accent: #e8c547;
+    --error: #e05c5c;
+    --success: #5aaa6e;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100dvh;
+  }
+
+  header {
+    padding: 16px 20px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  header a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  header a:hover { color: var(--text); }
+
+  h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.3rem;
+    color: var(--accent);
+    flex: 1;
+    text-align: center;
+  }
+
+  .container {
+    max-width: 560px;
+    margin: 0 auto;
+    padding: 24px 16px 48px;
+  }
+
+  .intro {
+    font-size: 0.9rem;
+    color: var(--muted);
+    line-height: 1.6;
+    margin-bottom: 28px;
+    padding: 14px 16px;
+    background: var(--surface);
+    border-radius: 12px;
+    border-left: 3px solid var(--accent);
+  }
+
+  .section-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    margin: 24px 0 12px;
+  }
+
+  .field {
+    margin-bottom: 16px;
+  }
+
+  label {
+    display: block;
+    font-size: 0.88rem;
+    font-weight: 500;
+    margin-bottom: 6px;
+    color: var(--text);
+  }
+
+  label .req { color: var(--accent); margin-left: 3px; }
+  label .hint { color: var(--muted); font-weight: 400; font-size: 0.8rem; margin-left: 6px; }
+
+  input, select, textarea {
+    width: 100%;
+    padding: 12px 14px;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.15s;
+    appearance: none;
+  }
+
+  input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+  input::placeholder, textarea::placeholder { color: var(--muted); }
+
+  select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; }
+
+  select option { background: #1a1a1a; }
+
+  textarea { resize: vertical; min-height: 90px; }
+
+  .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  .submit-btn {
+    width: 100%;
+    padding: 16px;
+    background: var(--accent);
+    color: #000;
+    border: none;
+    border-radius: 12px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 28px;
+    transition: opacity 0.15s;
+  }
+
+  .submit-btn:hover { opacity: 0.9; }
+  .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .honeypot { display: none; }
+
+  /* Success / error states */
+  #result {
+    display: none;
+    padding: 20px;
+    border-radius: 12px;
+    text-align: center;
+    margin-top: 20px;
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
+
+  #result.success { background: rgba(90,170,110,0.15); border: 1px solid var(--success); color: var(--success); }
+  #result.error { background: rgba(224,92,92,0.15); border: 1px solid var(--error); color: var(--error); }
+
+  .field-error { color: var(--error); font-size: 0.78rem; margin-top: 4px; display: none; }
+</style>
+</head>
+<body>
+
+<header>
+  <a href="/">← Back to map</a>
+  <h1>Add an Open Mic</h1>
+  <div style="width:80px"></div>
+</header>
+
+<div class="container">
+
+  <div class="intro">
+    Know an open mic that isn't on the map? Add it here and it'll appear within 24 hours. Please only submit venues you have first-hand knowledge of. 🎤
+  </div>
+
+  <form id="venueForm" novalidate>
+
+    <!-- Honeypot — bots fill this, humans don't -->
+    <input class="honeypot" type="text" name="website" tabindex="-1" autocomplete="off">
+
+    <div class="section-label">Venue details</div>
+
+    <div class="field">
+      <label>Venue name <span class="req">*</span></label>
+      <input type="text" name="name" placeholder="e.g. The Dublin Castle" required>
+      <div class="field-error" id="err-name">Please enter the venue name</div>
+    </div>
+
+    <div class="field">
+      <label>Address / Location <span class="req">*</span> <span class="hint">Full address preferred</span></label>
+      <input type="text" name="location" placeholder="e.g. 94 Parkway, London NW1 7AN" required>
+      <div class="field-error" id="err-location">Please enter a location</div>
+    </div>
+
+    <div class="row-2">
+      <div class="field">
+        <label>Day <span class="req">*</span></label>
+        <select name="day" required>
+          <option value="">Select day</option>
+          <option>Monday</option>
+          <option>Tuesday</option>
+          <option>Wednesday</option>
+          <option>Thursday</option>
+          <option>Friday</option>
+          <option>Saturday</option>
+          <option>Sunday</option>
+        </select>
+        <div class="field-error" id="err-day">Please select a day</div>
+      </div>
+
+      <div class="field">
+        <label>Start time <span class="req">*</span></label>
+        <input type="text" name="startTime" placeholder="e.g. 7:30pm" required>
+        <div class="field-error" id="err-startTime">Please enter a start time</div>
+      </div>
+    </div>
+
+    <div class="row-2">
+      <div class="field">
+        <label>Frequency <span class="hint">optional</span></label>
+        <select name="frequency">
+          <option value="">Select...</option>
+          <option>Weekly</option>
+          <option>Fortnightly</option>
+          <option>Monthly</option>
+          <option>Other</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Style <span class="hint">optional</span></label>
+        <input type="text" name="style" placeholder="e.g. All genres, Acoustic">
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Equipment provided <span class="hint">optional</span></label>
+      <input type="text" name="equipment" placeholder="e.g. PA, mics, house guitar, piano">
+    </div>
+
+    <div class="row-2">
+      <div class="field">
+        <label>Backing tracks <span class="hint">optional</span></label>
+        <select name="backingTracks">
+          <option value="">Unknown</option>
+          <option>Yes</option>
+          <option>No</option>
+          <option>Original music only</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Under 18s <span class="hint">optional</span></label>
+        <select name="under18s">
+          <option value="">Unknown</option>
+          <option>Yes</option>
+          <option>No</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Notes <span class="hint">optional — signup info, anything useful</span></label>
+      <textarea name="notes" placeholder="e.g. Sign up from 7pm, music starts 7:30pm. Walk-ins welcome."></textarea>
+    </div>
+
+    <div class="section-label">Contact & host info</div>
+
+    <div class="field">
+      <label>Contact <span class="hint">optional — phone, email, social</span></label>
+      <input type="text" name="contact" placeholder="e.g. 07700 900000 or @handle">
+    </div>
+
+    <div class="row-2">
+      <div class="field">
+        <label>Email <span class="hint">optional</span></label>
+        <input type="email" name="email" placeholder="host@example.com">
+      </div>
+
+      <div class="field">
+        <label>Instagram <span class="hint">optional</span></label>
+        <input type="text" name="instagram" placeholder="@yourvenue">
+      </div>
+    </div>
+
+    <div class="section-label">About you</div>
+
+    <div class="row-2">
+      <div class="field">
+        <label>Your name <span class="hint">optional</span></label>
+        <input type="text" name="submitterName" placeholder="First name">
+      </div>
+
+      <div class="field">
+        <label>Your role</label>
+        <select name="submitterRole">
+          <option value="Host">I host this open mic</option>
+          <option value="Attendee">I attend as a performer</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+    </div>
+
+    <button type="submit" class="submit-btn" id="submitBtn">Submit venue →</button>
+
+    <div id="result"></div>
+
+  </form>
+</div>
+
+<script>
+var SUBMIT_URL = 'https://script.google.com/macros/s/AKfycbzzky7_wAt1wdRRJDGF_OHA55dyXhuxolhUtLm_RG-fuKcCYsxVNf9p3Av82eOvNn3A_A/exec';
+
+var form = document.getElementById('venueForm');
+var submitBtn = document.getElementById('submitBtn');
+var result = document.getElementById('result');
+
+form.addEventListener('submit', function(e) {
+  e.preventDefault();
+
+  // Honeypot check
+  if (form.querySelector('[name="website"]').value) return;
+
+  // Validate required fields
+  var valid = true;
+  ['name', 'location', 'day', 'startTime'].forEach(function(field) {
+    var el = form.querySelector('[name="' + field + '"]');
+    var err = document.getElementById('err-' + field);
+    if (!el.value.trim()) {
+      err.style.display = 'block';
+      el.style.borderColor = 'var(--error)';
+      valid = false;
+    } else {
+      err.style.display = 'none';
+      el.style.borderColor = '';
+    }
+  });
+
+  if (!valid) return;
+
+  // Collect form data
+  var data = {
+    name:          form.querySelector('[name="name"]').value.trim(),
+    location:      form.querySelector('[name="location"]').value.trim(),
+    day:           form.querySelector('[name="day"]').value.toUpperCase(),
+    startTime:     form.querySelector('[name="startTime"]').value.trim(),
+    frequency:     form.querySelector('[name="frequency"]').value,
+    style:         form.querySelector('[name="style"]').value.trim(),
+    equipment:     form.querySelector('[name="equipment"]').value.trim(),
+    backingTracks: form.querySelector('[name="backingTracks"]').value,
+    under18s:      form.querySelector('[name="under18s"]').value,
+    notes:         form.querySelector('[name="notes"]').value.trim(),
+    contact:       form.querySelector('[name="contact"]').value.trim(),
+    email:         form.querySelector('[name="email"]').value.trim(),
+    instagram:     form.querySelector('[name="instagram"]').value.trim(),
+    submitterName: form.querySelector('[name="submitterName"]').value.trim(),
+    submitterRole: form.querySelector('[name="submitterRole"]').value,
+  };
+
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Submitting...';
+
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', SUBMIT_URL + '?action=addVenue&data=' + encodeURIComponent(JSON.stringify(data)));
+  xhr.onload = function() {
+    try {
+      var res = JSON.parse(xhr.responseText);
+      if (res.success) {
+        form.style.display = 'none';
+        result.className = 'success';
+        result.innerHTML = '✅ Thank you! <strong>' + data.name + '</strong> has been submitted and will appear on the map within 24 hours.';
+        result.style.display = 'block';
+      } else {
+        throw new Error(res.error || 'Unknown error');
+      }
+    } catch(err) {
+      result.className = 'error';
+      result.innerHTML = '❌ Something went wrong. Please try again or contact the admin.';
+      result.style.display = 'block';
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Submit venue →';
+    }
+  };
+  xhr.onerror = function() {
+    result.className = 'error';
+    result.innerHTML = '❌ Could not connect. Please check your connection and try again.';
+    result.style.display = 'block';
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Submit venue →';
+  };
+  xhr.send();
+});
+</script>
+</body>
+</html>
