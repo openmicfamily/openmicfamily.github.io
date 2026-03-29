@@ -365,7 +365,8 @@ form.addEventListener('submit', function(e) {
     try {
       var res = JSON.parse(xhr.responseText);
       if (res.success) {
-        form.style.display = 'none';
+        form.querySelectorAll('input, select, textarea, button').forEach(function(el) { el.style.display = 'none'; });
+        submitBtn.style.display = 'none';
         result.className = 'success';
         result.innerHTML = '✅ Thank you! <strong>' + data.name + '</strong> has been submitted and will appear on the map within 24 hours.';
         result.style.display = 'block';
