@@ -83,6 +83,7 @@
 
   .hdr-btn:active { transform: scale(0.95); }
   .hdr-btn.on { background: var(--accent); border-color: var(--accent); color: #000; }
+  #filterBtn.on { position: relative; z-index: 1002; } /* above backdrop */
 
   .filter-icon-wrap {
     position: relative;
@@ -551,18 +552,34 @@
   .venue-card-meta {
     font-size: 0.82rem;
     color: var(--muted);
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: start;
+    gap: 4px 8px;
+  }
+
+  .venue-card-meta-left {
     display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    align-items: center;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .venue-card-meta span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .venue-distance {
     font-size: 0.78rem;
     color: var(--accent);
     font-weight: 500;
-    margin-left: auto;
     flex-shrink: 0;
+    grid-row: 1 / 3;
+    grid-column: 2;
+    align-self: center;
+    white-space: nowrap;
   }
 
   .venue-card-chevron {
@@ -673,6 +690,124 @@
     border-left: none;
     transform: rotate(45deg);
   }
+
+  /* ── ADMIN MODE ── */
+  .admin-edit-btn {
+    display: none;
+    margin: 8px 18px 14px;
+    padding: 10px;
+    background: transparent;
+    border: 1.5px solid var(--accent);
+    color: var(--accent);
+    text-align: center;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    width: calc(100% - 36px);
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .admin-mode .admin-edit-btn { display: block; }
+
+  .admin-edit-btn:hover { background: var(--accent); color: #000; }
+
+  /* Edit drawer */
+  .edit-drawer {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: var(--surface);
+    border-radius: 24px 24px 0 0;
+    border-top: 1px solid var(--border);
+    z-index: 2000;
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+    max-height: 85vh;
+    overflow-y: auto;
+    padding-bottom: env(safe-area-inset-bottom, 20px);
+  }
+
+  .edit-drawer.show { transform: translateY(0); }
+
+  .edit-drawer-handle {
+    width: 48px; height: 5px;
+    background: var(--border);
+    border-radius: 3px;
+    margin: 14px auto 4px;
+  }
+
+  .edit-drawer-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text);
+    padding: 8px 20px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .edit-field {
+    padding: 12px 20px 0;
+  }
+
+  .edit-field label {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 6px;
+  }
+
+  .edit-field input, .edit-field select {
+    width: 100%;
+    padding: 10px 12px;
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem;
+    outline: none;
+  }
+
+  .edit-field input:focus, .edit-field select:focus { border-color: var(--accent); }
+
+  .edit-actions {
+    display: flex;
+    gap: 10px;
+    padding: 16px 20px 8px;
+  }
+
+  .edit-save-btn {
+    flex: 1;
+    padding: 14px;
+    background: var(--accent);
+    color: #000;
+    border: none;
+    border-radius: 12px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .edit-cancel-btn {
+    padding: 14px 20px;
+    background: var(--surface2);
+    color: var(--text);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem;
+    cursor: pointer;
+  }
+
+  .edit-status {
+    text-align: center;
+    font-size: 0.85rem;
+    padding: 8px 20px 16px;
+    color: var(--muted);
+  }
 </style>
 </head>
 <body>
@@ -687,7 +822,8 @@
   <header>
     <h1>London <em>Open Mics</em></h1>
 
-    <button class="hdr-btn" id="filterBtn">
+    <a href="/add" class="add-venue-btn" style="margin-right:4px;">+ Add</a>
+  <button class="hdr-btn" id="filterBtn">
       <div class="filter-icon-wrap">
         <svg class="icon-funnel" width="18" height="16" viewBox="0 0 18 16" fill="currentColor">
           <path d="M0 1a1 1 0 0 1 1-1h16a1 1 0 0 1 .8 1.6L11 9.2V15a1 1 0 0 1-1.4.9l-3-1.5A1 1 0 0 1 6 13.5V9.2L.2 2.6A1 1 0 0 1 0 1z"/>
@@ -709,7 +845,6 @@
       <button class="search-x" id="searchX">✕</button>
       <div class="search-results" id="searchResults"></div>
     </div>
-    <a href="/add" class="add-venue-btn">+ Add</a>
     <div class="view-toggle">
       <button class="view-btn active" id="mapViewBtn" title="Map view">🌍</button>
       <button class="view-btn" id="listViewBtn" title="List view">
@@ -810,6 +945,32 @@
   </div>
 </div>
 
+<!-- Edit venue drawer (admin mode only) -->
+<div class="drawer-backdrop" id="editBackdrop" style="z-index:1999"></div>
+<div class="edit-drawer" id="editDrawer">
+  <div class="edit-drawer-handle"></div>
+  <div class="edit-drawer-title" id="editDrawerTitle">Edit venue</div>
+  <input type="hidden" id="editVenueId">
+  <div class="edit-field"><label>Name</label><input type="text" id="editName"></div>
+  <div class="edit-field"><label>Location</label><input type="text" id="editLocation"></div>
+  <div class="edit-field"><label>Day</label>
+    <select id="editDay">
+      <option>MONDAY</option><option>TUESDAY</option><option>WEDNESDAY</option>
+      <option>THURSDAY</option><option>FRIDAY</option><option>SATURDAY</option><option>SUNDAY</option>
+    </select>
+  </div>
+  <div class="edit-field"><label>Start time</label><input type="text" id="editTime"></div>
+  <div class="edit-field"><label>Frequency</label><input type="text" id="editFrequency"></div>
+  <div class="edit-field"><label>Style</label><input type="text" id="editStyle"></div>
+  <div class="edit-field"><label>Equipment</label><input type="text" id="editEquipment"></div>
+  <div class="edit-field" style="padding-bottom:4px"><label>Notes</label><input type="text" id="editNotes"></div>
+  <div class="edit-actions">
+    <button class="edit-cancel-btn" id="editCancelBtn">Cancel</button>
+    <button class="edit-save-btn" id="editSaveBtn">Save changes</button>
+  </div>
+  <div class="edit-status" id="editStatus"></div>
+</div>
+
 <script>
 var COLOURS = { MONDAY:'#e05c5c', TUESDAY:'#e07a3a', WEDNESDAY:'#d4b84a', THURSDAY:'#5aaa6e', FRIDAY:'#4a8fd4', SATURDAY:'#7b64d4', SUNDAY:'#c45aaa' };
 var DAYS = ['MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY','SUNDAY'];
@@ -885,6 +1046,21 @@ function render() {
         });
       }, 50);
     })(m);
+    if (isAdmin) {
+      (function(venue, marker) {
+        marker.on('popupopen', function() {
+          var el = marker.getPopup().getElement();
+          if (!el) return;
+          var existing = el.querySelector('.admin-edit-btn');
+          if (existing) return;
+          var btn = document.createElement('button');
+          btn.className = 'admin-edit-btn';
+          btn.textContent = '✏️ Edit this venue';
+          btn.onclick = function() { marker.closePopup(); openEditDrawer(venue); };
+          el.querySelector('.leaflet-popup-content').appendChild(btn);
+        });
+      })(v, m);
+    }
     markers.push(m);
   }
   updateTips();
@@ -950,7 +1126,7 @@ searchInput.addEventListener('input',function(){
   var q=searchInput.value.trim();
   filter=q.toLowerCase();
   searchX.style.display=q?'block':'none';
-  if(q.length<2){ searchResults.style.display='none'; render(); return; }
+  if(q.length<2){ searchResults.style.display='none'; render(); if(currentView==='list') renderList(); return; }
   var matches=venues.filter(function(v){ return v.name.toLowerCase().indexOf(q.toLowerCase())!==-1||v.location.toLowerCase().indexOf(q.toLowerCase())!==-1; }).slice(0,8);
   if(!matches.length){ searchResults.style.display='none'; render(); return; }
   searchResults.innerHTML='';
@@ -1118,9 +1294,16 @@ function renderList() {
   DAYS_ORDER.forEach(function(d) { byDay[d] = []; });
   filtered.forEach(function(v) { if (byDay[v.day]) byDay[v.day].push(v); });
 
-  // Sort each day by time
+  // Sort each day by distance (if available) or time
   DAYS_ORDER.forEach(function(d) {
-    byDay[d].sort(function(a, b) { return (a.time || 'zzz').localeCompare(b.time || 'zzz'); });
+    byDay[d].sort(function(a, b) {
+      if (lastLat && a.lat && b.lat) {
+        var da = calcDistance(lastLat, lastLng, a.lat, a.lng);
+        var db = calcDistance(lastLat, lastLng, b.lat, b.lng);
+        return da - db;
+      }
+      return (a.time || 'zzz').localeCompare(b.time || 'zzz');
+    });
   });
 
   var html = '';
@@ -1131,14 +1314,14 @@ function renderList() {
     html += '<div class="list-day-header"><div class="list-day-dot" style="background:' + colour + '"></div>' + label + '</div>';
     byDay[d].forEach(function(v) {
       var mapsUrl = 'https://maps.google.com/?q=' + encodeURIComponent(v.name + ', ' + v.location);
-      var meta = '';
-      if (v.time) meta += '<span>🕐 ' + v.time + '</span>';
-      meta += '<span>📍 ' + v.location + '</span>';
+      var timeStr = v.time ? '<span>🕐 ' + v.time + '</span>' : '';
+      var locStr = '<span>📍 ' + v.location + '</span>';
       var distStr = '';
       if (lastLat && v.lat && v.lng) {
         var d = calcDistance(lastLat, lastLng, v.lat, v.lng);
         distStr = '<span class="venue-distance">' + formatDist(d) + '</span>';
       }
+      var meta = '<div class="venue-card-meta-left">' + timeStr + locStr + '</div>';
 
       var bodyRows = '';
       if (v.frequency) bodyRows += '<div class="venue-card-row"><span class="venue-card-icon">🔁</span><span>' + v.frequency + '</span></div>';
@@ -1173,6 +1356,90 @@ function renderList() {
 function toggleCard(card) {
   card.classList.toggle('open');
 }
+
+// ── ADMIN MODE ──
+var isAdmin = window.location.search.indexOf('admin=true') !== -1;
+if (isAdmin) document.body.classList.add('admin-mode');
+
+var editDrawer = document.getElementById('editDrawer');
+var editBackdrop = document.getElementById('editBackdrop');
+var currentEditVenue = null;
+
+function openEditDrawer(v) {
+  currentEditVenue = v;
+  document.getElementById('editDrawerTitle').textContent = 'Edit: ' + v.name;
+  document.getElementById('editVenueId').value = v.venueId || '';
+  document.getElementById('editName').value = v.name || '';
+  document.getElementById('editLocation').value = v.location || '';
+  document.getElementById('editDay').value = v.day || 'MONDAY';
+  document.getElementById('editTime').value = v.time || '';
+  document.getElementById('editFrequency').value = v.frequency || '';
+  document.getElementById('editStyle').value = v.style || '';
+  document.getElementById('editEquipment').value = v.equipment || '';
+  document.getElementById('editNotes').value = v.notes || '';
+  document.getElementById('editStatus').textContent = '';
+  editDrawer.classList.add('show');
+  editBackdrop.classList.add('show');
+}
+
+function closeEditDrawer() {
+  editDrawer.classList.remove('show');
+  editBackdrop.classList.remove('show');
+}
+
+document.getElementById('editCancelBtn').addEventListener('click', closeEditDrawer);
+editBackdrop.addEventListener('click', closeEditDrawer);
+
+document.getElementById('editSaveBtn').addEventListener('click', function() {
+  var btn = this;
+  var status = document.getElementById('editStatus');
+  var data = {
+    venueId:   document.getElementById('editVenueId').value,
+    name:      document.getElementById('editName').value.trim(),
+    location:  document.getElementById('editLocation').value.trim(),
+    day:       document.getElementById('editDay').value,
+    startTime: document.getElementById('editTime').value.trim(),
+    frequency: document.getElementById('editFrequency').value.trim(),
+    style:     document.getElementById('editStyle').value.trim(),
+    equipment: document.getElementById('editEquipment').value.trim(),
+    notes:     document.getElementById('editNotes').value.trim(),
+  };
+
+  if (!data.name || !data.location || !data.venueId) {
+    status.textContent = '⚠️ Name, location and venue ID are required.';
+    return;
+  }
+
+  btn.textContent = 'Saving...';
+  btn.disabled = true;
+
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', 'https://script.google.com/macros/s/AKfycbzzky7_wAt1wdRRJDGF_OHA55dyXhuxolhUtLm_RG-fuKcCYsxVNf9p3Av82eOvNn3A_A/exec?action=editVenue&data=' + encodeURIComponent(JSON.stringify(data)));
+  xhr.onload = function() {
+    try {
+      var res = JSON.parse(xhr.responseText);
+      if (res.success) {
+        status.style.color = '#5aaa6e';
+        status.textContent = '✅ Saved! Reload the map to see changes.';
+        btn.textContent = 'Saved ✓';
+      } else {
+        throw new Error(res.error);
+      }
+    } catch(e) {
+      status.style.color = '#e05c5c';
+      status.textContent = '❌ Error: ' + e.message;
+      btn.textContent = 'Save changes';
+      btn.disabled = false;
+    }
+  };
+  xhr.onerror = function() {
+    status.style.color = '#e05c5c';
+    status.textContent = '❌ Network error. Try again.';
+    btn.textContent = 'Save changes';
+    btn.disabled = false;
+  };
+  xhr.send();
+});
 
 // ── LOAD ──
 var xhr = new XMLHttpRequest();
