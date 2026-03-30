@@ -1012,7 +1012,7 @@ function popup(v) {
   if(v.instagram) r+='<div class="p-row"><span class="p-icon">📷</span><span>'+v.instagram+'</span></div>';
   r+='<div class="p-row"><span class="p-icon">📍</span><span>'+v.location+'</span></div>';
   var staleWarning = v.stale ? '<div style="background:#fff3cd;color:#856404;padding:8px 18px;font-size:0.8rem;">⚠️ Not confirmed in 50+ days — may no longer be running</div>' : '';
-  return '<div class="p-header"><div class="p-badge" style="background:'+c+'">'+tc(v.day)+'</div><div class="p-name">'+v.name+'</div></div><div class="p-body">'+r+'</div><a class="p-maps" href="'+u+'" target="_blank">Open in Google Maps &rarr;</a>'+'<div style="text-align:center;padding:4px 0 10px"><a href="mailto:usman.imtiazi@gmail.com?subject=Error: '+encodeURIComponent(v.name)+'&body=Venue: '+encodeURIComponent(v.name)+'%0AIssue: " style="font-size:0.75rem;color:#999;text-decoration:none;">⚑ Report an error</a></div>';
+  return '<div class="p-header"><div class="p-badge" style="background:'+c+'">'+tc(v.day)+'</div><div class="p-name">'+v.name+'</div></div><div class="p-body">'+r+'</div><a class="p-maps" href="'+u+'" target="_blank">Open in Google Maps &rarr;</a>'+'<span class="venue-id-store" style="display:none">'+(v.venueId||'')+'</span>'+'<div style="text-align:center;padding:4px 0 10px"><a href="mailto:usman.imtiazi@gmail.com?subject=Error: '+encodeURIComponent(v.name)+'&body=Venue: '+encodeURIComponent(v.name)+'%0AIssue: " style="font-size:0.75rem;color:#999;text-decoration:none;">⚑ Report an error</a></div>';
 }
 
 function render() {
@@ -1368,7 +1368,13 @@ var currentEditVenue = null;
 function openEditDrawer(v) {
   currentEditVenue = v;
   document.getElementById('editDrawerTitle').textContent = 'Edit: ' + v.name;
-  document.getElementById('editVenueId').value = v.venueId || '';
+  // Try venueId from object first, fall back to reading from popup DOM
+  var vid = v.venueId || '';
+  if (!vid) {
+    var store = document.querySelector('.venue-id-store');
+    if (store) vid = store.textContent.trim();
+  }
+  document.getElementById('editVenueId').value = vid;
   document.getElementById('editName').value = v.name || '';
   document.getElementById('editLocation').value = v.location || '';
   document.getElementById('editDay').value = v.day || 'MONDAY';
