@@ -1420,7 +1420,7 @@ document.getElementById('editSaveBtn').addEventListener('click', function() {
   btn.disabled = true;
 
   var xhr = new XMLHttpRequest();
-  xhr.open('GET', 'https://script.google.com/macros/s/AKfycbzzky7_wAt1wdRRJDGF_OHA55dyXhuxolhUtLm_RG-fuKcCYsxVNf9p3Av82eOvNn3A_A/exec?action=editVenue&data=' + encodeURIComponent(JSON.stringify(data)));
+  xhr.open('GET', 'https://script.google.com/macros/s/AKfycbxR-T9OXmnkuikldlz_2VwZZHhDiKV8sCtJY7-pHjxPDYNAzsL078cUoKCszmaGRs1dTQ/exec?action=editVenue&data=' + encodeURIComponent(JSON.stringify(data)));
   xhr.onload = function() {
     try {
       var res = JSON.parse(xhr.responseText);
@@ -1449,11 +1449,13 @@ document.getElementById('editSaveBtn').addEventListener('click', function() {
 
 // ── LOAD ──
 var xhr = new XMLHttpRequest();
-xhr.open('GET', 'https://script.google.com/macros/s/AKfycbzzky7_wAt1wdRRJDGF_OHA55dyXhuxolhUtLm_RG-fuKcCYsxVNf9p3Av82eOvNn3A_A/exec?format=json');
+xhr.open('GET', 'https://script.google.com/macros/s/AKfycbxR-T9OXmnkuikldlz_2VwZZHhDiKV8sCtJY7-pHjxPDYNAzsL078cUoKCszmaGRs1dTQ/exec?format=json');
 xhr.onload = function() {
   if (xhr.status === 200) {
     try {
       venues = JSON.parse(xhr.responseText);
+      // Log first venue to check venueId
+      if (venues.length) console.log('First venue venueId:', venues[0].venueId, venues[0].name);
       render();
       document.getElementById('loading').style.display = 'none';
       clearInterval(si);
