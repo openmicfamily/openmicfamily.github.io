@@ -1,1472 +1,1558 @@
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>London Open Mic Nights</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<style>
-  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-
-  :root {
-    --bg: #0f0f0f;
-    --surface: #1a1a1a;
-    --surface2: #2a2a2a;
-    --border: #333;
-    --text: #f0ece4;
-    --muted: #999;
-    --accent: #e8c547;
-    --mon: #e05c5c;
-    --tue: #e07a3a;
-    --wed: #d4b84a;
-    --thu: #5aaa6e;
-    --fri: #4a8fd4;
-    --sat: #7b64d4;
-    --sun: #c45aaa;
-  }
-
-  html, body {
-    height: 100%;
-    overflow: hidden;
-    font-family: 'DM Sans', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-  }
-
-  /* ── LAYOUT ── */
-  #app {
-    display: flex;
-    flex-direction: column;
-    height: 100dvh;
-  }
-
-  /* ── HEADER ── */
-  header {
-    height: 48px;
-    padding: 0 14px;
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    flex-shrink: 0;
-    z-index: 1003;
-  }
-
-  h1 {
-    font-family: 'DM Serif Display', serif;
-    font-size: 1.1rem;
-    color: var(--accent);
-    flex: 1;
-  }
-
-  h1 em { font-style: italic; }
-
-  .hdr-btn {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: var(--surface2);
-    border: 1.5px solid var(--border);
-    color: var(--text);
-    font-size: 1.2rem;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    transition: all 0.15s;
-    position: relative;
-  }
-
-  .hdr-btn:active { transform: scale(0.95); }
-  .hdr-btn.on { background: var(--accent); border-color: var(--accent); color: #000; }
-  #filterBtn.on { position: relative; z-index: 1002; } /* above backdrop */
-
-  .filter-icon-wrap {
-    position: relative;
-    width: 18px; height: 16px;
-  }
-
-  .icon-funnel, .icon-close {
-    position: absolute;
-    top: 0; left: 0;
-    transition: opacity 0.2s, transform 0.2s;
-  }
-
-  .icon-close {
-    opacity: 0;
-    transform: rotate(-45deg) scale(0.6);
-  }
-
-  .hdr-btn.on .icon-funnel {
-    opacity: 0;
-    transform: rotate(45deg) scale(0.6);
-  }
-
-  .hdr-btn.on .icon-close {
-    opacity: 1;
-    transform: rotate(0deg) scale(1);
-  }
-
-  .hdr-btn.on .day-badge { display: none; }
-
-  .day-badge {
-    position: absolute;
-    top: -2px; right: -2px;
-    min-width: 20px; height: 20px;
-    background: var(--accent);
-    color: #000;
-    border-radius: 10px;
-    font-size: 0.65rem;
-    font-weight: 700;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    padding: 0 4px;
-  }
-
-  /* ── SEARCH ── */
-  .search-bar {
-    padding: 5px 12px;
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    flex-shrink: 0;
-    position: relative;
-  }
-
-  .search-bar input {
-    width: 100%;
-    padding: 9px 36px 9px 32px;
-    background: var(--surface2);
-    border: 1.5px solid var(--border);
-    border-radius: 10px;
-    color: var(--text);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 0.95rem;
-    outline: none;
-    transition: border-color 0.2s;
-  }
-
-  .search-bar input:focus { border-color: var(--accent); }
-  .search-bar input::placeholder { color: var(--muted); }
-
-  .search-icon {
-    position: absolute;
-    left: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 0.85rem;
-    pointer-events: none;
-    color: var(--muted);
-  }
-
-  .search-x {
-    position: absolute;
-    right: 26px;
-    top: 50%;
-    transform: translateY(-50%);
-    background: none;
-    border: none;
-    color: var(--muted);
-    font-size: 0.85rem;
-    cursor: pointer;
-    padding: 6px;
-    display: none;
-  }
-
-  .search-results {
-    position: absolute;
-    top: calc(100% - 1px);
-    left: 16px; right: 16px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-top: none;
-    border-radius: 0 0 16px 16px;
-    z-index: 500;
-    display: none;
-    overflow: hidden;
-    max-height: 50vh;
-    overflow-y: auto;
-  }
-
-  .s-item {
-    padding: 18px 20px;
-    font-size: 1rem;
-    cursor: pointer;
-    border-top: 1px solid var(--border);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 12px;
-  }
-
-  .s-item:active { background: var(--surface2); }
-
-  .s-item-name { flex: 1; }
-  .s-item-loc { font-size: 0.85rem; color: var(--muted); margin-top: 2px; }
-
-  .s-day-pill {
-    font-size: 0.7rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    padding: 4px 10px;
-    border-radius: 12px;
-    color: #fff;
-    flex-shrink: 0;
-  }
-
-  /* ── MAP ── */
-  #map { flex: 1; }
-
-  /* ── FILTER DRAWER (bottom sheet) ── */
-  .drawer-backdrop {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.5);
-    z-index: 1000;
-    display: none;
-    opacity: 0;
-    transition: opacity 0.25s;
-  }
-
-  .drawer-backdrop.show { display: block; opacity: 1; }
-
-  .drawer {
-    position: fixed;
-    top: 52px; right: 0; bottom: 0;
-    width: min(320px, 85vw);
-    background: var(--surface);
-    border-radius: 20px 0 0 20px;
-    z-index: 1001;
-    transform: translateX(100%);
-    transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
-    overflow-y: auto;
-    padding-bottom: env(safe-area-inset-bottom, 20px);
-  }
-
-  .drawer.show { transform: translateX(0); }
-
-  .drawer-handle { display: none; }
-
-  .drawer-title {
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    padding: 0 20px 16px;
-  }
-
-  .day-list {
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-    padding: 0 16px 8px;
-  }
-
-
-  .day-item {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    padding: 12px 16px;
-    border-radius: 12px;
-    cursor: pointer;
-    transition: background 0.1s;
-    font-size: 0.95rem;
-    font-weight: 500;
-    color: var(--text);
-    border: 1.5px solid transparent;
-    margin-bottom: 4px;
-  }
-
-  .day-item:active { background: var(--surface2); }
-
-  .day-item.active {
-    border-color: transparent;
-    color: #fff;
-  }
-
-  .day-item[data-day="ALL"].active { background: var(--accent); color: #000; }
-  .day-item[data-day="MONDAY"].active    { background: var(--mon); }
-  .day-item[data-day="TUESDAY"].active   { background: var(--tue); }
-  .day-item[data-day="WEDNESDAY"].active { background: var(--wed); color: #222; }
-  .day-item[data-day="THURSDAY"].active  { background: var(--thu); }
-  .day-item[data-day="FRIDAY"].active    { background: var(--fri); }
-  .day-item[data-day="SATURDAY"].active  { background: var(--sat); }
-  .day-item[data-day="SUNDAY"].active    { background: var(--sun); }
-
-  .day-dot {
-    width: 18px; height: 18px;
-    border-radius: 50%;
-    flex-shrink: 0;
-  }
-
-  .day-count {
-    margin-left: auto;
-    font-size: 0.85rem;
-    color: var(--muted);
-    font-weight: 400;
-  }
-
-  .day-item.active .day-count { color: rgba(255,255,255,0.7); }
-  .day-item[data-day="ALL"].active .day-count { color: rgba(0,0,0,0.5); }
-  .day-item[data-day="WEDNESDAY"].active .day-count { color: rgba(0,0,0,0.5); }
-
-  /* ── POPUPS ── */
-  .leaflet-popup-content-wrapper {
-    background: #fff;
-    color: #222;
-    border-radius: 18px;
-    box-shadow: 0 12px 40px rgba(0,0,0,0.2);
-    padding: 0;
-    overflow: hidden;
-  }
-
-  .leaflet-popup-content { margin: 0; min-width: 250px; max-width: 300px; }
-  .leaflet-popup-tip { background: #fff; }
-  .leaflet-popup-close-button {
-    color: #aaa !important;
-    top: 12px !important;
-    right: 12px !important;
-    font-size: 22px !important;
-    width: 32px !important;
-    height: 32px !important;
-  }
-
-  .p-header { padding: 16px 18px 12px; border-bottom: 1px solid #f0f0f0; }
-
-  .p-badge {
-    display: inline-block;
-    font-size: 0.65rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    padding: 3px 10px;
-    border-radius: 12px;
-    margin-bottom: 8px;
-    color: #fff;
-  }
-
-  .p-name {
-    font-family: 'DM Serif Display', serif;
-    font-size: 1.1rem;
-    line-height: 1.2;
-    color: #111;
-  }
-
-  .p-body { padding: 12px 18px 4px; display: flex; flex-direction: column; gap: 9px; }
-
-  .p-row { display: flex; gap: 10px; align-items: flex-start; font-size: 0.92rem; line-height: 1.5; color: #333; }
-  .p-icon { flex-shrink: 0; width: 18px; text-align: center; }
-
-  .p-maps {
-    display: block;
-    margin: 14px 18px 18px;
-    padding: 15px;
-    background: var(--accent);
-    color: #000;
-    text-align: center;
-    border-radius: 14px;
-    font-size: 1rem;
-    font-weight: 600;
-    text-decoration: none;
-  }
-
-  /* ── LOADING ── */
-  #loading {
-    position: fixed;
-    inset: 0;
-    background: var(--bg);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    z-index: 9999;
-    gap: 24px;
-  }
-
-  #loading h2 { font-family: 'DM Serif Display', serif; font-size: 1.8rem; color: var(--accent); }
-  #loading p { color: var(--muted); font-size: 1rem; }
-  .spinner { width: 44px; height: 44px; border-radius: 50%; border: 3px solid var(--border); border-top: 3px solid var(--accent); }
-
-  /* ── LOCATION ── */
-  .loc-dot {
-    width: 14px; height: 14px;
-    border-radius: 50%;
-    background: #4285f4;
-    border: 2.5px solid #fff;
-    box-shadow: 0 0 0 3px rgba(66,133,244,0.35);
-    animation: loc-pulse 2s infinite;
-  }
-
-  @keyframes loc-pulse {
-    0%   { box-shadow: 0 0 0 3px rgba(66,133,244,0.35); }
-    50%  { box-shadow: 0 0 0 10px rgba(66,133,244,0.05); }
-    100% { box-shadow: 0 0 0 3px rgba(66,133,244,0.35); }
-  }
-
-  /* ── MARKER (classic Google pin shape) ── */
-  .m-pin svg {
-    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.35));
-  }
-
-  /* ── TOOLTIP ── */
-  .v-tip {
-    background: rgba(20,20,20,0.72);
-    color: #f0ece4;
-    border: none;
-    border-radius: 6px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 0.72rem;
-    font-weight: 500;
-    padding: 3px 8px;
-    box-shadow: 0 1px 6px rgba(0,0,0,0.25);
-    white-space: nowrap;
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
-    pointer-events: auto;
-    cursor: pointer;
-  }
-  .v-tip::before { display: none; }
-  .v-tip-hide { display: none !important; }
-
-  .loc-popup { padding: 12px 16px; font-family: 'DM Sans', sans-serif; font-size: 0.95rem; color: #333; }
-
-  /* ── LIST VIEW ── */
-  .add-venue-btn {
-    background: var(--accent);
-    color: #000;
-    border-radius: 8px;
-    padding: 0 12px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 0.82rem;
-    font-weight: 600;
-    text-decoration: none;
-    white-space: nowrap;
-    display: flex;
-    align-items: center;
-    height: 40px;
-    flex-shrink: 0;
-  }
-
-  .view-toggle {
-    display: flex;
-    gap: 3px;
-    background: var(--surface2);
-    border-radius: 10px;
-    padding: 3px;
-    flex-shrink: 0;
-  }
-
-  .view-btn {
-    width: 36px; height: 34px;
-    border: none;
-    border-radius: 8px;
-    background: transparent;
-    color: var(--muted);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.1rem;
-    transition: all 0.15s;
-  }
-
-  .view-btn.active {
-    background: var(--surface);
-    color: var(--text);
-    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
-  }
-
-  #listView {
-    flex: 1;
-    overflow-y: auto;
-    display: none;
-    background: var(--bg);
-  }
-
-  .list-day-header {
-    padding: 14px 16px 8px;
-    font-size: 0.75rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--muted);
-    background: var(--bg);
-    position: sticky;
-    top: 0;
-    z-index: 10;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .list-day-dot {
-    width: 10px; height: 10px;
-    border-radius: 50%;
-    flex-shrink: 0;
-  }
-
-  .venue-card {
-    margin: 0 12px 8px;
-    background: var(--surface);
-    border-radius: 14px;
-    border: 1px solid var(--border);
-    overflow: hidden;
-    cursor: pointer;
-    transition: border-color 0.15s;
-  }
-
-  .venue-card:active { border-color: var(--accent); }
-
-  .venue-card-header {
-    padding: 14px 16px;
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-  }
-
-  .venue-card-dot {
-    width: 12px; height: 12px;
-    border-radius: 50%;
-    flex-shrink: 0;
-    margin-top: 4px;
-  }
-
-  .venue-card-main { flex: 1; min-width: 0; }
-
-  .venue-card-name {
-    font-size: 1rem;
-    font-weight: 600;
-    color: var(--text);
-    margin-bottom: 4px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .venue-card-meta {
-    font-size: 0.82rem;
-    color: var(--muted);
-    display: grid;
-    grid-template-columns: 1fr auto;
-    align-items: start;
-    gap: 4px 8px;
-  }
-
-  .venue-card-meta-left {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    min-width: 0;
-  }
-
-  .venue-card-meta span {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .venue-distance {
-    font-size: 0.78rem;
-    color: var(--accent);
-    font-weight: 500;
-    flex-shrink: 0;
-    grid-row: 1 / 3;
-    grid-column: 2;
-    align-self: center;
-    white-space: nowrap;
-  }
-
-  .venue-card-chevron {
-    color: var(--muted);
-    font-size: 0.8rem;
-    flex-shrink: 0;
-    margin-top: 2px;
-    transition: transform 0.2s;
-  }
-
-  .venue-card.open .venue-card-chevron { transform: rotate(180deg); }
-
-  .venue-card-body {
-    display: none;
-    padding: 0 16px 14px 40px;
-    border-top: 1px solid var(--border);
-  }
-
-  .venue-card.open .venue-card-body { display: block; }
-
-  .venue-card-row {
-    display: flex;
-    gap: 8px;
-    align-items: flex-start;
-    font-size: 0.85rem;
-    line-height: 1.5;
-    color: var(--text);
-    padding: 5px 0;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .venue-card-row:last-of-type { border-bottom: none; }
-
-  .venue-card-icon { flex-shrink: 0; width: 18px; text-align: center; color: var(--muted); }
-
-  .venue-maps-btn {
-    display: block;
-    margin-top: 12px;
-    padding: 11px;
-    background: var(--accent);
-    color: #000;
-    text-align: center;
-    border-radius: 10px;
-    font-size: 0.88rem;
-    font-weight: 600;
-    text-decoration: none;
-  }
-
-  .list-empty {
-    padding: 60px 20px;
-    text-align: center;
-    color: var(--muted);
-    font-size: 0.95rem;
-  }
-
-  .equip-list {
-    padding: 0 16px 24px;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
-
-  .equip-item {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 16px;
-    border-radius: 14px;
-    background: var(--surface2);
-    border: 1.5px solid var(--border);
-    cursor: pointer;
-    font-size: 1rem;
-    font-weight: 500;
-    color: var(--text);
-    transition: all 0.15s;
-    -webkit-tap-highlight-color: transparent;
-  }
-
-  .equip-item.active {
-    border-color: var(--accent);
-    background: rgba(232,197,71,0.12);
-  }
-
-  .equip-check {
-    width: 22px;
-    height: 22px;
-    min-width: 22px;
-    border-radius: 50%;
-    border: 2px solid var(--muted);
-    flex-shrink: 0;
-    position: relative;
-    background: transparent;
-    transition: all 0.15s;
-  }
-
-  .equip-item.active .equip-check {
-    background: var(--accent);
-    border-color: var(--accent);
-  }
-
-  .equip-item.active .equip-check::after {
-    content: '';
-    position: absolute;
-    top: 3px; left: 6px;
-    width: 5px; height: 9px;
-    border: 2.5px solid #000;
-    border-top: none;
-    border-left: none;
-    transform: rotate(45deg);
-  }
-
-  /* ── ADMIN MODE ── */
-  .admin-edit-btn {
-    display: none;
-    margin: 8px 18px 14px;
-    padding: 10px;
-    background: transparent;
-    border: 1.5px solid var(--accent);
-    color: var(--accent);
-    text-align: center;
-    border-radius: 10px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    cursor: pointer;
-    width: calc(100% - 36px);
-    font-family: 'DM Sans', sans-serif;
-  }
-
-  .admin-mode .admin-edit-btn { display: block; }
-
-  .admin-edit-btn:hover { background: var(--accent); color: #000; }
-
-  /* Edit drawer */
-  .edit-drawer {
-    position: fixed;
-    bottom: 0; left: 0; right: 0;
-    background: var(--surface);
-    border-radius: 24px 24px 0 0;
-    border-top: 1px solid var(--border);
-    z-index: 2000;
-    transform: translateY(100%);
-    transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
-    max-height: 85vh;
-    overflow-y: auto;
-    padding-bottom: env(safe-area-inset-bottom, 20px);
-  }
-
-  .edit-drawer.show { transform: translateY(0); }
-
-  .edit-drawer-handle {
-    width: 48px; height: 5px;
-    background: var(--border);
-    border-radius: 3px;
-    margin: 14px auto 4px;
-  }
-
-  .edit-drawer-title {
-    font-size: 1rem;
-    font-weight: 600;
-    color: var(--text);
-    padding: 8px 20px 16px;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .edit-field {
-    padding: 12px 20px 0;
-  }
-
-  .edit-field label {
-    display: block;
-    font-size: 0.78rem;
-    font-weight: 600;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    margin-bottom: 6px;
-  }
-
-  .edit-field input, .edit-field select {
-    width: 100%;
-    padding: 10px 12px;
-    background: var(--surface2);
-    border: 1.5px solid var(--border);
-    border-radius: 10px;
-    color: var(--text);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 0.95rem;
-    outline: none;
-  }
-
-  .edit-field input:focus, .edit-field select:focus { border-color: var(--accent); }
-
-  .edit-actions {
-    display: flex;
-    gap: 10px;
-    padding: 16px 20px 8px;
-  }
-
-  .edit-save-btn {
-    flex: 1;
-    padding: 14px;
-    background: var(--accent);
-    color: #000;
-    border: none;
-    border-radius: 12px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 0.95rem;
-    font-weight: 700;
-    cursor: pointer;
-  }
-
-  .edit-cancel-btn {
-    padding: 14px 20px;
-    background: var(--surface2);
-    color: var(--text);
-    border: 1.5px solid var(--border);
-    border-radius: 12px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 0.95rem;
-    cursor: pointer;
-  }
-
-  .edit-status {
-    text-align: center;
-    font-size: 0.85rem;
-    padding: 8px 20px 16px;
-    color: var(--muted);
-  }
-</style>
-</head>
-<body>
-<div id="app">
-
-  <div id="loading">
-    <div class="spinner"></div>
-    <h2>London <em>Open Mics</em></h2>
-    <p>Loading venues...</p>
-  </div>
-
-  <header>
-    <h1>London <em>Open Mics</em></h1>
-
-    <a href="/add" class="add-venue-btn" style="margin-right:4px;">+ Add</a>
-  <button class="hdr-btn" id="filterBtn">
-      <div class="filter-icon-wrap">
-        <svg class="icon-funnel" width="18" height="16" viewBox="0 0 18 16" fill="currentColor">
-          <path d="M0 1a1 1 0 0 1 1-1h16a1 1 0 0 1 .8 1.6L11 9.2V15a1 1 0 0 1-1.4.9l-3-1.5A1 1 0 0 1 6 13.5V9.2L.2 2.6A1 1 0 0 1 0 1z"/>
-        </svg>
-        <svg class="icon-close" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-          <line x1="2" y1="2" x2="14" y2="14"/>
-          <line x1="14" y1="2" x2="2" y2="14"/>
-        </svg>
+/**
+ * London Open Mic Nights — Apps Script Backend
+ * =============================================
+ * Serves venue data as JSON to openmicfamily.github.io
+ * Sends daily email summaries and monitors for closed venues.
+ *
+ * SHEET COLUMNS:
+ *   A:  Day          E:  Location      I:  Start Time    M: Updated By
+ *   B:  [blank]      F:  Frequency     J:  Notes         N: @Instagram
+ *   C:  Name         G:  Style         K:  Contact       O: Backing Tracks
+ *   D:  [blank]      H:  Equipment     L:  Host Email    P: Under 18s
+ *   Q: empty    R: Map Status    S: Lat    T: Lng    V: Venue ID
+ *
+ * DEPLOY:
+ *   Deploy → New deployment → Web app → Anyone → Execute as Me
+ *   The web app URL serves JSON at ?format=json
+ *
+ * TRIGGERS (run once to set up):
+ *   createEmailTrigger()       — daily 8am email summary
+ *   createMonitoringTriggers() — closed venue alerts + monthly new venues
+ *   setupWeeklyHealthCheck()   — weekly health check prompt
+ */
+
+// ─── CONFIG ───────────────────────────────────────────────────────────────────
+
+const SHEET_NAME_ = "Open Mic Schedule"; // exact tab name
+
+// Append this to location strings that don't already contain it
+const CITY_SUFFIX_ = ", London, UK";
+
+// Equipment keywords → emoji
+const EQUIP_EMOJI_ = {
+  "piano":      "🎹",
+  "keyboard":   "🎹",
+  "keys":       "🎹",
+  "pa":         "🔊",
+  "drums":      "🥁",
+  "drum":       "🥁",
+  "cajon":      "🥁",
+  "backline":   "🎸",
+  "back-line":  "🎸",
+  "back line":  "🎸",
+  "bass":       "🎸",
+  "guitar":     "🎸",
+  "mic":        "🎤",
+  "mics":       "🎤",
+};
+
+
+// ─── WEB MAP PAGE ─────────────────────────────────────────────────────────────
+
+/**
+ * Serves either the map HTML page or a JSON feed of venues.
+ * Deploy as a Web App (Anyone, execute as Me).
+ * 
+ * ?format=json  → returns venue data as JSON
+ * (no params)   → returns the map HTML page
+ */
+function doGet(e) {
+  const format = e && e.parameter && e.parameter.format;
+  const action = e && e.parameter && e.parameter.action;
+  const callback = e && e.parameter && e.parameter.callback;
+
+  // Handle venue edit (admin)
+  if (action === 'editVenue') {
+    return handleVenueEdit_(e);
+  }
+
+  // Handle venue submission
+  if (action === 'addVenue') {
+    return handleVenueSubmission_(e);
+  }
+
+  // Handle host confirmation click
+  if (action === CONFIRM_ACTION_) {
+    return handleConfirmation_(e);
+  }
+
+  if (format === 'json') {
+    const venues = getActiveVenues_()
+      .map(v => ({
+        name:         v.name,
+        location:     v.location,
+        day:          v.day,
+        time:         v.time,
+        frequency:    v.frequency,
+        style:        v.style,
+        equipment:    v.equipment,
+        notes:        v.notes,
+        contact:      v.contact,
+        instagram:    v.instagram,
+        backingTracks: v.backingTracks,
+        under18s:     v.under18s,
+        lat:          v.cachedLat,
+        lng:          v.cachedLng,
+      }))
+      .filter(v => v.lat && v.lng);
+
+    const json = JSON.stringify(venues);
+
+    // JSONP support for cross-origin requests from GitHub Pages
+    if (callback) {
+      return ContentService
+        .createTextOutput(callback + '(' + json + ')')
+        .setMimeType(ContentService.MimeType.JAVASCRIPT);
+    }
+
+    return ContentService
+      .createTextOutput(json)
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+
+  return serveMapPage_();
+}
+
+function serveJSON_() {
+  const venues = getActiveVenues_()
+    .map(v => ({
+      name:         v.name,
+      location:     v.location,
+      day:          v.day,
+      time:         v.time,
+      frequency:    v.frequency,
+      style:        v.style,
+      equipment:    v.equipment,
+      notes:        v.notes,
+      contact:      v.contact,
+      instagram:    v.instagram,
+      backingTracks: v.backingTracks,
+      under18s:     v.under18s,
+      lat:          v.cachedLat,
+      lng:          v.cachedLng,
+      stale:        isStale_(v.checkedDate),
+      venueId:      v.venueId,
+    }))
+    .filter(v => v.lat && v.lng);
+
+  // Add CORS headers so GitHub Pages can fetch this
+  return ContentService
+    .createTextOutput(JSON.stringify(venues))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+// Handle CORS preflight OPTIONS request
+function doOptions(e) {
+  return ContentService
+    .createTextOutput('')
+    .setMimeType(ContentService.MimeType.TEXT);
+}
+
+function serveMapPage_() {
+  const scriptUrl = ScriptApp.getService().getUrl();
+  const venuesUrl = scriptUrl + '?format=json';
+  const html = HtmlService.createHtmlOutputFromFile('map')
+    .setTitle('London Open Mic Nights')
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+  // Inject the venues URL into the page
+  const content = html.getContent().replace('window.VENUES_URL', JSON.stringify(venuesUrl));
+  return HtmlService.createHtmlOutput(content)
+    .setTitle('London Open Mic Nights')
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+
+
+
+// ─── DATA READING ─────────────────────────────────────────────────────────────
+
+function getSheet_() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  return ss.getSheetByName(SHEET_NAME_) || ss.getSheets()[0];
+}
+
+function getActiveVenues_() {
+  const sheet    = getSheet_();
+  const lastRow  = sheet.getLastRow();
+  const lastCol  = 22; // columns A–V (includes Venue ID in col V)
+
+  const values   = sheet.getRange(1, 1, lastRow, lastCol).getValues();
+  // Get font-line (strikethrough) for col C (index 2) only — one cell per row
+  const fontLines = sheet.getRange(1, 3, lastRow, 1).getFontLines();
+
+  const venues = [];
+
+  for (let i = 0; i < values.length; i++) {
+    const r = values[i];
+
+    const colA = (r[0]  || "").toString().trim();  // Day
+    const colC = (r[2]  || "").toString().trim();  // Name
+    const colE = (r[4]  || "").toString().trim();  // Location
+    const colF = (r[5]  || "").toString().trim();  // Frequency
+    const colG = (r[6]  || "").toString().trim();  // Style
+    const colH = (r[7]  || "").toString().trim();  // Equipment
+    const colI = (r[8]  || "").toString().trim();  // Schedule/Time
+    const colJ = (r[9]  || "").toString().trim();  // Notes
+    const colK = (r[10] || "").toString().trim();  // Contact
+    const colN = (r[14] || "").toString().trim();  // @handle
+    const colO = (r[15] || "").toString().trim();  // Backing Tracks
+    const colP = (r[16] || "").toString().trim();  // Under 18s
+    const colQ = (r[18] || "").toString().trim();  // Cached Lat (written by Awesome Table, col S)
+    const colR = (r[19] || "").toString().trim();  // Cached Lng (written by Awesome Table, col T)
+
+    // Must have a day in col A and a name in col C to be a data row
+    if (!colA || !colC) continue;
+
+    // Skip section header rows (col A === col C, e.g. both "MONDAY")
+    if (colA.toUpperCase() === colC.toUpperCase()) continue;
+
+    // Skip if name cell has strikethrough (= inactive / cancelled)
+    const isStrikethrough = fontLines[i][0] === "line-through";
+    if (isStrikethrough) {
+      Logger.log(`⏭️ Skipping (strikethrough): "${colC}"`);
+      continue;
+    }
+
+    // Skip known cancelled markers in notes
+    const lowerNotes = colJ.toLowerCase();
+    if (lowerNotes.includes("cancelled") || lowerNotes.includes("on hold") || lowerNotes.includes("closed")) {
+      Logger.log(`⏭️ Skipping (cancelled/on hold): "${colC}"`);
+      continue;
+    }
+
+    // Skip if Map Status column (Q, index 16) contains "EXCLUDE"
+    const mapStatus = (r[17] || "").toString().trim().toUpperCase();
+    if (mapStatus === "EXCLUDE") {
+      Logger.log(`⏭️ Skipping (excluded from map): "${colC}"`);
+      continue;
+    }
+
+    venues.push({
+      rowIndex:     i,              // needed to write lat/lng back to sheet
+      day:          colA.toUpperCase(),
+      name:         colC,
+      location:     colE || colC,   // fall back to name for geocoding if no location
+      frequency:    colF,
+      style:        colG,
+      equipment:    colH,
+      time:         formatTimeDisplay_(colI),
+      notes:        colJ,
+      contact:      colK,
+      instagram:    colN,
+      backingTracks: colO,
+      under18s:     colP,
+      cachedLat:    parseFloat(colQ) || null,
+      cachedLng:    parseFloat(colR) || null,
+      checkedDate:  (r[12] || '').toString().trim(),
+      venueId:      (r[21] || '').toString().trim(),
+    });
+  }
+
+  Logger.log(`✅ ${venues.length} active venues found.`);
+  return venues;
+}
+
+// ─── TIME FORMATTING ──────────────────────────────────────────────────────────
+
+/**
+ * Normalises messy time formats into a readable string.
+ * Handles:
+ *   - Google Sheets Date objects (stored as actual Date when cell is time-formatted)
+ *   - 7.3 → 7:30pm, 8 → 8pm (decimal shorthand, always PM for open mic hours)
+ *   - "7pm", "7:30 PM" → cleaned up
+ *   - "630-930pm" → "6:30–9:30pm"
+ *   - "6pm. Bi-weekly" → "6pm" (strips trailing non-time text)
+ */
+function formatTime_(raw) {
+  if (!raw) return "";
+
+  // Handle actual Date objects
+  if (raw instanceof Date && !isNaN(raw)) {
+    const h = raw.getHours();
+    const m = raw.getMinutes();
+    if (h === 0 && m === 0) return "";
+    const displayHour = h > 12 ? h - 12 : (h === 0 ? 12 : h);
+    const suffix = h < 12 ? "am" : "pm";
+    return m > 0
+      ? `${displayHour}:${String(m).padStart(2, "0")}${suffix}`
+      : `${displayHour}${suffix}`;
+  }
+
+  const s = raw.toString().trim();
+  if (!s || s === "-") return "";
+
+  // Ordinal = schedule note, not a time
+  if (/^\d+(st|nd|rd|th)/i.test(s)) return "";
+
+  // Time range with hyphen: "6.30 - 9.30pm", "7-10", "630-930pm"
+  const rangeMatch = s.match(/^(\d+\.?\d*)\s*[-\u2013]\s*(\d+\.?\d*)/);
+  if (rangeMatch) {
+    return decodeDecimalTime_(rangeMatch[1]) + "\u2013" + decodeDecimalTime_(rangeMatch[2]);
+  }
+
+  // Contains am/pm — extract first time only
+  if (/\d\s*(am|pm)/i.test(s)) {
+    const match = s.match(/(\d{1,2}(?:[:.][0-9]{2})?\s*(?:am|pm))/i);
+    if (match) return match[1].replace(/\s*(am|pm)/gi, x => x.trim().toLowerCase());
+    return s.replace(/ PM/i, "pm").replace(/ AM/i, "am").trim();
+  }
+
+  // Has letters but no am/pm — extract leading number
+  if (/[a-zA-Z]/.test(s)) {
+    const leadingTime = s.match(/^(\d{1,2}(?:[.:]\d{2})?)\s*/i);
+    if (leadingTime && parseFloat(leadingTime[1]) >= 1) {
+      return formatTime_(leadingTime[1].trim());
+    }
+    return "";
+  }
+
+  return decodeDecimalTime_(s);
+}
+
+function decodeDecimalTime_(s) {
+  const n = parseFloat(s);
+  if (isNaN(n)) return s;
+  const hour = Math.floor(n);
+  // Decimal part: 7.3 means :30, 7.45 means :45
+  const decPart = Math.round((n - hour) * 100);
+  const mins = decPart <= 9 ? decPart * 10 : decPart; // 3 → 30, 45 → 45
+  // Open mic hours: treat 5–11 as PM, 12 as noon, 1–4 as AM (unlikely but safe)
+  const suffix = (hour >= 5 && hour < 12) ? "pm" : (hour === 12 ? "pm" : "am");
+  const displayHour = hour > 12 ? hour - 12 : hour;
+  return mins > 0
+    ? `${displayHour}:${String(mins).padStart(2, "0")}${suffix}`
+    : `${displayHour}${suffix}`;
+}
+
+/**
+ * Smart time formatter that handles ranges and extracts start time.
+ * - "6.30 - 9.30pm" → "6:30pm – 9:30pm"
+ * - "7pm sign up, music 7.30pm" → "7pm"
+ * - "7.3" → "7:30pm"
+ */
+function formatTimeDisplay_(raw) {
+  if (!raw) return "";
+
+  // Handle Date objects
+  if (raw instanceof Date && !isNaN(raw)) {
+    const h = raw.getHours(), m = raw.getMinutes();
+    if (h === 0 && m === 0) return "";
+    const dh = h > 12 ? h - 12 : (h === 0 ? 12 : h);
+    const suffix = h < 12 ? "am" : "pm";
+    return m > 0 ? `${dh}:${String(m).padStart(2,"0")}${suffix}` : `${dh}${suffix}`;
+  }
+
+  const s = raw.toString().trim();
+  if (!s || s === "-") return "";
+
+  // Check for time range pattern: number[-–]number (e.g. "6.30-9.30pm", "6:30 - 9:30pm")
+  const rangeMatch = s.match(/^(\d{1,2}(?:[.:]\d{2})?)\s*[-–]\s*(\d{1,2}(?:[.:]\d{2})?\s*(?:am|pm)?)/i);
+  if (rangeMatch) {
+    return decodeDecimalTime_(rangeMatch[1]) + "–" + decodeDecimalTime_(rangeMatch[2]);
+  }
+
+  // Otherwise just extract the first time
+  return formatTime_(raw);
+}
+
+// ─── GEOCODING ────────────────────────────────────────────────────────────────
+
+const geocodeCache__ = {};
+
+/**
+ * Returns coords for a row, using cached lat/lng from the sheet if available.
+ * Only calls the geocoding API for rows that don't have cached coords yet.
+ * Writes new coords back to the sheet so future runs skip the API call.
+ */
+function getCoordsForRow_(row) {
+  // Use cached coords from sheet if already present
+  if (row.cachedLat && row.cachedLng) {
+    return { lat: row.cachedLat, lng: row.cachedLng };
+  }
+
+  // Combine venue name + location for better geocoding accuracy
+  // e.g. "The Dublin Castle, Camden" is much more accurate than just "Camden"
+  // Use title case for better geocoding results
+  function toTitleCase(str) {
+    return str.split(' ').map(function(w) {
+      return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+    }).join(' ');
+  }
+  const namePart = toTitleCase(row.name.trim());
+  const locPart = toTitleCase((row.location || '').trim());
+  const query = locPart && locPart !== namePart
+    ? namePart + ', ' + locPart
+    : namePart;
+
+  const coords = geocodeAddress_(query);
+  if (coords) {
+    writeCoordsToSheet_(row.rowIndex, coords);
+  }
+  return coords;
+}
+
+/**
+ * Writes lat/lng back into columns Q and R of the sheet for a given row.
+ * Adds "Lat" and "Lng" headers if not already present.
+ */
+function writeCoordsToSheet_(rowIndex, coords) {
+  try {
+    const sheet = getSheet_();
+
+    // Ensure headers exist in row 1
+    const headers = sheet.getRange(1, 1, 1, 18).getValues()[0];
+    if (!headers[16] || headers[16].toString().trim() === "") {
+      sheet.getRange(1, 19).setValue("Lat");
+    }
+    if (!headers[17] || headers[17].toString().trim() === "") {
+      sheet.getRange(1, 20).setValue("Lng");
+    }
+
+    // Write coords to cols Q (17) and R (18) for this row (1-indexed)
+    sheet.getRange(rowIndex + 1, 19).setValue(coords.lat);
+    sheet.getRange(rowIndex + 1, 20).setValue(coords.lng);
+  } catch (e) {
+    Logger.log(`Could not write coords to sheet for row ${rowIndex + 1}: ${e.message}`);
+  }
+}
+
+function geocodeAddress_(location) {
+  if (!location) return null;
+
+  // Clean up the query — title case, trim extra spaces
+  const cleaned = location.trim().replace(/\s+/g, ' ');
+
+  // Add city suffix if not already present
+  const query = /london|uk|england/i.test(cleaned)
+    ? cleaned
+    : cleaned + CITY_SUFFIX_;
+
+  if (geocodeCache__[query]) return geocodeCache__[query];
+
+  try {
+    const result = Maps.newGeocoder().geocode(query);
+    if (result.status === "OK" && result.results.length > 0) {
+      const loc = result.results[0].geometry.location;
+      geocodeCache__[query] = { lat: loc.lat, lng: loc.lng };
+      return geocodeCache__[query];
+    }
+  } catch (err) {
+    Logger.log(`Geocode error for "${query}": ${err.message}`);
+  }
+
+  return null;
+}
+
+/**
+ * Run this once to geocode ALL venues and cache their coords in the sheet.
+ * After this, normal runs will use the cached values and never hit the API.
+ * Only needs re-running when new venues are added.
+ */
+function geocodeAllAndCache() {
+  const sheet = getSheet_();
+  const lastRow = sheet.getLastRow();
+  const values = sheet.getRange(1, 1, lastRow, 22).getValues();
+  const fontLines = sheet.getRange(1, 3, lastRow, 1).getFontLines();
+
+  let geocoded = 0, skipped = 0, failed = 0;
+
+  // Ensure headers
+  sheet.getRange(1, 17).setValue("Lat");
+  sheet.getRange(1, 18).setValue("Lng");
+
+  for (let i = 1; i < values.length; i++) {
+    const r = values[i];
+    const colA = (r[0] || "").toString().trim();
+    const colC = (r[2] || "").toString().trim();
+    const colE = (r[4] || "").toString().trim();
+    const colQ = (r[18] || "").toString().trim();
+    const colR = (r[19] || "").toString().trim();
+
+    // Skip non-venue rows
+    if (!colA || !colC) continue;
+    if (colA.toUpperCase() === colC.toUpperCase()) continue;
+    if (fontLines[i][0] === "line-through") continue;
+
+    // Skip if already cached
+    if (colQ && colR) {
+      skipped++;
+      continue;
+    }
+
+    // Combine venue name + location for better accuracy
+    const location = (colE && colE !== colC) ? colC + ', ' + colE : (colE || colC);
+    const coords = geocodeAddress_(location);
+    if (coords) {
+      sheet.getRange(i + 1, 19).setValue(coords.lat);
+      sheet.getRange(i + 1, 20).setValue(coords.lng);
+      Logger.log(`✅ [${i+1}] ${colC} → ${coords.lat.toFixed(4)},${coords.lng.toFixed(4)}`);
+      geocoded++;
+      // Small pause to avoid hitting rate limits
+      Utilities.sleep(100);
+    } else {
+      Logger.log(`❌ [${i+1}] ${colC} → FAILED`);
+      failed++;
+    }
+  }
+
+  Logger.log(`\n✅ Geocoded: ${geocoded} | ⏭️ Already cached: ${skipped} | ❌ Failed: ${failed}`);
+  SpreadsheetApp.getActiveSpreadsheet().toast(
+    `Geocoded ${geocoded} new venues. ${skipped} already cached. ${failed} failed.`,
+    "📍 Geocoding complete",
+    8
+  );
+}
+
+// ─── HELPERS ──────────────────────────────────────────────────────────────────
+
+function formatEquipment_(raw) {
+  if (!raw) return "";
+  const lower = raw.toLowerCase();
+  const found = [];
+  Object.entries(EQUIP_EMOJI_).forEach(([k, emoji]) => {
+    if (lower.includes(k) && !found.find(f => f.emoji === emoji)) {
+      found.push({ emoji, label: k });
+    }
+  });
+  const prefix = found.map(f => f.emoji).join(" ");
+  return prefix ? `${prefix} ${raw}` : raw;
+}
+
+function titleCase_(str) {
+  if (!str) return "";
+  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+}
+
+function escapeXml_(str) {
+  return (str || "")
+    .replace(/&/g,  "&amp;")
+    .replace(/</g,  "&lt;")
+    .replace(/>/g,  "&gt;")
+    .replace(/"/g,  "&quot;")
+    .replace(/'/g,  "&apos;");
+}
+
+
+// ─── CUSTOM MENU & BUTTON ─────────────────────────────────────────────────────
+
+/**
+ * Adds a custom "🗺️ Open Mic Map" menu to the Google Sheet toolbar.
+ * This runs automatically every time the sheet is opened.
+ */
+function onOpen() {
+  try {
+    SpreadsheetApp.getUi()
+      .createMenu("⚙️ Admin")
+      .addItem("Get today\'s summary", "getTodaySummary")
+      .addToUi();
+  } catch(e) {
+    // Safe to ignore — UI not available when run manually from Apps Script
+  }
+}
+
+// ─── WHATSAPP DAILY SUMMARY ───────────────────────────────────────────────────
+// Run manually, or set a daily time trigger. Logs a WhatsApp-ready message.
+
+/**
+ * Lightweight version of getActiveVenues_ that skips geocoding.
+ * Used for the daily summary where we only need text data.
+ */
+function getActiveVenuesNoGeocode_() {
+  const sheet    = getSheet_();
+  const lastRow  = sheet.getLastRow();
+  // Read all data in one single call — no getFontLines(), no per-cell calls
+  const values   = sheet.getRange(1, 1, lastRow, 20).getValues();
+  const venues = [];
+
+  for (let i = 0; i < values.length; i++) {
+    const r = values[i];
+    const colA = (r[0]  || "").toString().trim();
+    const colC = (r[2]  || "").toString().trim();
+    const colE = (r[4]  || "").toString().trim();
+    const colF = (r[5]  || "").toString().trim();
+    const colG = (r[6]  || "").toString().trim();
+    const colH = (r[7]  || "").toString().trim();
+    const colI = r[8];
+    const colJ = (r[9]  || "").toString().trim();
+    const colK = (r[10] || "").toString().trim();
+    const colN = (r[14] || "").toString().trim();
+    const colQ = (r[17] || "").toString().trim().toUpperCase(); // Map Status
+
+    if (!colA || !colC) continue;
+    if (colA.toUpperCase() === colC.toUpperCase()) continue;
+
+    // Use Map Status instead of strikethrough — "Skipped - inactive" or "EXCLUDE"
+    if (colQ === "EXCLUDE") continue;
+    if (colQ.includes("SKIPPED")) continue;
+
+    const lowerNotes = colJ.toLowerCase();
+    if (lowerNotes.includes("cancelled") || lowerNotes.includes("on hold") || lowerNotes.includes("closed")) continue;
+
+    venues.push({
+      day:       colA.toUpperCase(),
+      name:      colC,
+      location:  colE || colC,
+      frequency: colF,
+      style:     colG,
+      equipment: colH,
+      time:      formatTime_(colI),
+      notes:     colJ,
+      contact:   colK,
+      instagram: colN,
+    });
+  }
+  return venues;
+}
+
+function getTodaySummary() {
+  const days = ["SUNDAY","MONDAY","TUESDAY","WEDNESDAY","THURSDAY","FRIDAY","SATURDAY"];
+  const today = days[new Date().getDay()];
+  const venues = getActiveVenuesNoGeocode_().filter(v => v.day === today);
+
+  let html;
+  if (!venues.length) {
+    html = `<p style="font-family:sans-serif;padding:16px;">No active open mics listed for <b>${titleCase_(today)}</b>.</p>`;
+  } else {
+    let rows = "";
+    venues.forEach(v => {
+      let details = "";
+      if (v.time || v.frequency) details += `<div style="color:#555;font-size:13px;">⏰ ${[v.time, v.frequency].filter(Boolean).join(" · ")}</div>`;
+      if (v.style)     details += `<div style="font-size:13px;">🎵 ${v.style}</div>`;
+      if (v.equipment) details += `<div style="font-size:13px;">🎸 ${v.equipment}</div>`;
+      if (v.notes)     details += `<div style="font-size:13px;">📝 ${v.notes}</div>`;
+      if (v.contact)   details += `<div style="font-size:13px;">📞 ${v.contact}</div>`;
+      if (v.instagram) details += `<div style="font-size:13px;">📷 ${v.instagram}</div>`;
+      details += `<div style="font-size:13px;color:#888;">📍 ${v.location}</div>`;
+
+      rows += `
+        <div style="margin-bottom:16px;padding:12px;background:#f9f9f9;border-radius:8px;border-left:4px solid #4CAF50;">
+          <div style="font-weight:bold;font-size:15px;margin-bottom:4px;">${v.name}</div>
+          ${details}
+        </div>`;
+    });
+
+    // Build plain text version for copying into WhatsApp
+    // Kept minimal — just what someone needs to decide whether to go
+    let plainText = `🎤 Open Mics in London Today — (${titleCase_(today)})\n\n`;
+    venues.forEach(v => {
+      plainText += `*${v.name}*`;
+      if (v.time)    plainText += ` · ${v.time}`;
+      plainText += "\n";
+      plainText += `📍 ${v.location}\n`;
+      const mapsUrl = `https://maps.google.com/?q=${encodeURIComponent(v.name + ", " + v.location)}`;
+      plainText += `${mapsUrl}\n\n`;
+    });
+    plainText += `🗺️ Full map: https://goo.gl/maps/4uNM1p4UgM3H4z2a9\n`;
+    plainText += `📋 More details on spreadsheet: https://tinyurl.com/OpenMicFamily`;
+
+    html = `
+      <div style="font-family:sans-serif;padding:12px;">
+        <h3 style="margin:0 0 4px;color:#333;">🎙️ Open Mics — ${titleCase_(today)}</h3>
+        <p style="margin:0 0 12px;font-size:12px;color:#888;">${venues.length} open mic${venues.length > 1 ? "s" : ""} listed today</p>
+
+        ${rows}
+
+        <div style="position:sticky;bottom:0;background:white;padding-top:8px;border-top:1px solid #eee;margin-top:8px;">
+          <textarea id="waText" style="width:100%;height:120px;font-size:12px;border:1px solid #ddd;border-radius:6px;padding:8px;box-sizing:border-box;resize:none;">${plainText.replace(/</g,"&lt;").replace(/>/g,"&gt;")}</textarea>
+          <button onclick="copyText()" style="margin-top:6px;width:100%;padding:10px;background:#25D366;color:white;border:none;border-radius:6px;font-size:14px;font-weight:bold;cursor:pointer;">
+            📋 Copy for WhatsApp
+          </button>
+          <button onclick="openWhatsApp()" style="margin-top:6px;width:100%;padding:10px;background:#128C7E;color:white;border:none;border-radius:6px;font-size:14px;font-weight:bold;cursor:pointer;">
+            💬 Open in WhatsApp
+          </button>
+          <div id="copied" style="display:none;text-align:center;color:#25D366;font-size:13px;margin-top:6px;">✅ Copied! Paste into WhatsApp.</div>
+        </div>
       </div>
-      <div class="day-badge" id="dayBadge"></div>
-    </button>
-  </header>
-
-  <div class="search-bar">
-  <div style="display:flex;gap:8px;align-items:center;">
-    <div class="search-inner" id="searchWrap" style="flex:1;position:relative;">
-      <span class="search-icon">🔍</span>
-      <input type="text" id="searchInput" placeholder="Search venues...">
-      <button class="search-x" id="searchX">✕</button>
-      <div class="search-results" id="searchResults"></div>
-    </div>
-    <div class="view-toggle">
-      <button class="view-btn active" id="mapViewBtn" title="Map view">🌍</button>
-      <button class="view-btn" id="listViewBtn" title="List view">
-        <svg width="16" height="14" viewBox="0 0 16 14" fill="currentColor">
-          <circle cx="2" cy="2" r="1.5"/><rect x="5" y="1" width="11" height="2" rx="1"/>
-          <circle cx="2" cy="7" r="1.5"/><rect x="5" y="6" width="11" height="2" rx="1"/>
-          <circle cx="2" cy="12" r="1.5"/><rect x="5" y="11" width="11" height="2" rx="1"/>
-        </svg>
-      </button>
-    </div>
-  </div>
-</div>
-
-  <div id="map"></div>
-<div id="listView"></div>
-<button id="locBtn" title="Go to my location" style="
-  position:fixed;
-  bottom:32px;
-  right:16px;
-  width:48px;
-  height:48px;
-  border-radius:50%;
-  background:#fff;
-  border:none;
-  box-shadow:0 2px 12px rgba(0,0,0,0.3);
-  cursor:pointer;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  z-index:500;
-  -webkit-tap-highlight-color:transparent;
-">
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-    <circle cx="12" cy="12" r="3"/>
-    <path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
-    <circle cx="12" cy="12" r="8" stroke-dasharray="2 4"/>
-  </svg>
-</button>
-</div>
-
-<!-- Filter drawer -->
-<div class="drawer-backdrop" id="backdrop"></div>
-<div class="drawer" id="drawer">
-  <div class="drawer-title" style="padding: 16px 20px;">Filter by day</div>
-  <div class="day-list" id="dayList">
-    <div class="day-item active" data-day="ALL">
-      <div class="day-dot" style="background:var(--accent)"></div>
-      <span>All days</span>
-      <span class="day-count" id="cnt-ALL"></span>
-    </div>
-    <div class="day-item" data-day="MONDAY">
-      <div class="day-dot" style="background:var(--mon)"></div>
-      <span>Monday</span>
-      <span class="day-count" id="cnt-MONDAY"></span>
-    </div>
-    <div class="day-item" data-day="TUESDAY">
-      <div class="day-dot" style="background:var(--tue)"></div>
-      <span>Tuesday</span>
-      <span class="day-count" id="cnt-TUESDAY"></span>
-    </div>
-    <div class="day-item" data-day="WEDNESDAY">
-      <div class="day-dot" style="background:var(--wed)"></div>
-      <span>Wednesday</span>
-      <span class="day-count" id="cnt-WEDNESDAY"></span>
-    </div>
-    <div class="day-item" data-day="THURSDAY">
-      <div class="day-dot" style="background:var(--thu)"></div>
-      <span>Thursday</span>
-      <span class="day-count" id="cnt-THURSDAY"></span>
-    </div>
-    <div class="day-item" data-day="FRIDAY">
-      <div class="day-dot" style="background:var(--fri)"></div>
-      <span>Friday</span>
-      <span class="day-count" id="cnt-FRIDAY"></span>
-    </div>
-    <div class="day-item" data-day="SATURDAY">
-      <div class="day-dot" style="background:var(--sat)"></div>
-      <span>Saturday</span>
-      <span class="day-count" id="cnt-SATURDAY"></span>
-    </div>
-    <div class="day-item" data-day="SUNDAY">
-      <div class="day-dot" style="background:var(--sun)"></div>
-      <span>Sunday</span>
-      <span class="day-count" id="cnt-SUNDAY"></span>
-    </div>
-  </div>
-
-  <div class="drawer-title" style="padding: 16px 20px 12px; margin-top: 4px; border-top: 1px solid var(--border);">Filter by equipment</div>
-  <div class="equip-list" id="equipList">
-    <div class="equip-item" data-filter="backingTracks">
-      <div class="equip-check" id="chk-backingTracks"></div>
-      <span>🎵 Backing tracks allowed</span>
-    </div>
-    <div class="equip-item" data-filter="piano">
-      <div class="equip-check" id="chk-piano"></div>
-      <span>🎹 Piano / keyboard</span>
-    </div>
-  </div>
-</div>
-
-<!-- Edit venue drawer (admin mode only) -->
-<div class="drawer-backdrop" id="editBackdrop" style="z-index:1999"></div>
-<div class="edit-drawer" id="editDrawer">
-  <div class="edit-drawer-handle"></div>
-  <div class="edit-drawer-title" id="editDrawerTitle">Edit venue</div>
-  <input type="hidden" id="editVenueId">
-  <div class="edit-field"><label>Name</label><input type="text" id="editName"></div>
-  <div class="edit-field"><label>Location</label><input type="text" id="editLocation"></div>
-  <div class="edit-field"><label>Day</label>
-    <select id="editDay">
-      <option>MONDAY</option><option>TUESDAY</option><option>WEDNESDAY</option>
-      <option>THURSDAY</option><option>FRIDAY</option><option>SATURDAY</option><option>SUNDAY</option>
-    </select>
-  </div>
-  <div class="edit-field"><label>Start time</label><input type="text" id="editTime"></div>
-  <div class="edit-field"><label>Frequency</label><input type="text" id="editFrequency"></div>
-  <div class="edit-field"><label>Style</label><input type="text" id="editStyle"></div>
-  <div class="edit-field"><label>Equipment</label><input type="text" id="editEquipment"></div>
-  <div class="edit-field" style="padding-bottom:4px"><label>Notes</label><input type="text" id="editNotes"></div>
-  <div class="edit-actions">
-    <button class="edit-cancel-btn" id="editCancelBtn">Cancel</button>
-    <button class="edit-save-btn" id="editSaveBtn">Save changes</button>
-  </div>
-  <div class="edit-status" id="editStatus"></div>
-</div>
-
-<script>
-var COLOURS = { MONDAY:'#e05c5c', TUESDAY:'#e07a3a', WEDNESDAY:'#d4b84a', THURSDAY:'#5aaa6e', FRIDAY:'#4a8fd4', SATURDAY:'#7b64d4', SUNDAY:'#c45aaa' };
-var DAYS = ['MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY','SUNDAY'];
-
-var map = L.map('map', { center:[51.505,-0.12], zoom:11 });
-L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { attribution:'&copy; OSM &copy; CartoDB', maxZoom:19 }).addTo(map);
-
-// Tooltip→marker wiring done per-marker in render()
-
-// Spinner
-var sp = document.querySelector('.spinner'), sa = 0;
-var si = setInterval(function(){ sa=(sa+10)%360; sp.style.transform='rotate('+sa+'deg)'; }, 16);
-
-var venues=[], markers=[], activeDay='ALL', filter='', locMarker=null;
-
-// ── MARKERS ──
-function icon(day, stale) {
-  var c = stale ? '#888' : (COLOURS[day] || '#888');
-  var opacity = stale ? '0.5' : '1';
-  var warning = stale ? '<div style="position:absolute;top:-6px;right:-2px;background:#e8c547;color:#000;border-radius:50%;width:14px;height:14px;font-size:9px;display:flex;align-items:center;justify-content:center;font-weight:bold;box-shadow:0 1px 3px rgba(0,0,0,0.3)">?</div>' : '';
-  var svg = '<svg width="22" height="30" viewBox="0 0 20 28" fill="none" xmlns="http://www.w3.org/2000/svg">' +
-    '<path d="M10 0C4.477 0 0 4.477 0 10c0 7.5 10 18 10 18S20 17.5 20 10C20 4.477 15.523 0 10 0z" fill="' + c + '"/>' +
-    '<circle cx="10" cy="10" r="4" fill="rgba(255,255,255,0.35)"/>' +
-    '<path d="M10 0C4.477 0 0 4.477 0 10c0 7.5 10 18 10 18S20 17.5 20 10C20 4.477 15.523 0 10 0z" fill="none" stroke="white" stroke-width="1.5"/>' +
-    '</svg>';
-  return L.divIcon({ className:'m-pin', html:'<div style="width:44px;height:44px;display:flex;align-items:center;justify-content:center;position:relative;opacity:' + opacity + '">' + svg + warning + '</div>', iconSize:[44,44], iconAnchor:[22,40], popupAnchor:[0,-40] });
-}
-
-function tc(s){ return s ? s[0].toUpperCase()+s.slice(1).toLowerCase() : ''; }
-
-function popup(v) {
-  var c=COLOURS[v.day]||'#888', u='https://maps.google.com/?q='+encodeURIComponent(v.name+', '+v.location), r='';
-  if(v.time)      r+='<div class="p-row"><span class="p-icon">⏰</span><span>'+v.time+'</span></div>';
-  if(v.frequency) r+='<div class="p-row"><span class="p-icon">🔁</span><span>'+v.frequency+'</span></div>';
-  if(v.style)     r+='<div class="p-row"><span class="p-icon">🎵</span><span>'+v.style+'</span></div>';
-  if(v.equipment) r+='<div class="p-row"><span class="p-icon">🎸</span><span>'+v.equipment+'</span></div>';
-  if(v.notes)     r+='<div class="p-row"><span class="p-icon">📝</span><span>'+v.notes+'</span></div>';
-  if(v.contact)   r+='<div class="p-row"><span class="p-icon">📞</span><span>'+v.contact+'</span></div>';
-  if(v.instagram) r+='<div class="p-row"><span class="p-icon">📷</span><span>'+v.instagram+'</span></div>';
-  r+='<div class="p-row"><span class="p-icon">📍</span><span>'+v.location+'</span></div>';
-  var staleWarning = v.stale ? '<div style="background:#fff3cd;color:#856404;padding:8px 18px;font-size:0.8rem;">⚠️ Not confirmed in 50+ days — may no longer be running</div>' : '';
-  return '<div class="p-header"><div class="p-badge" style="background:'+c+'">'+tc(v.day)+'</div><div class="p-name">'+v.name+'</div></div><div class="p-body">'+r+'</div><a class="p-maps" href="'+u+'" target="_blank">Open in Google Maps &rarr;</a>'+'<span class="venue-id-store" style="display:none">'+(v.venueId||'')+'</span>'+'<div style="text-align:center;padding:4px 0 10px"><a href="mailto:usman.imtiazi@gmail.com?subject=Error: '+encodeURIComponent(v.name)+'&body=Venue: '+encodeURIComponent(v.name)+'%0AIssue: " style="font-size:0.75rem;color:#999;text-decoration:none;">⚑ Report an error</a></div>';
-}
-
-function render() {
-  for(var i=0;i<markers.length;i++) map.removeLayer(markers[i]);
-  markers=[];
-  var q=filter.toLowerCase();
-  var vis=venues.filter(function(v){
-    return (activeDay==='ALL'||v.day===activeDay) && (!q||v.name.toLowerCase().indexOf(q)!==-1||v.location.toLowerCase().indexOf(q)!==-1) && v.lat && v.lng && matchesEquip(v);
-  });
-  for(var j=0;j<vis.length;j++){
-    var v=vis[j];
-    var m=L.marker([v.lat,v.lng],{icon:icon(v.day,v.stale)})
-      .bindPopup(popup(v),{maxWidth:300})
-      .bindTooltip(v.name,{permanent:true,direction:'top',offset:[0,-28],opacity:1,className:'v-tip v-tip-hide'})
-      .addTo(map);
-    // Wire tooltip click directly to this specific marker
-    (function(marker) {
-      setTimeout(function() {
-        var tip = marker.getTooltip();
-        if (!tip) return;
-        var el = tip.getElement();
-        if (!el) return;
-        el.addEventListener('click', function(e) {
-          e.stopPropagation();
-          marker.openPopup();
-        });
-        el.addEventListener('touchend', function(e) {
-          e.preventDefault();
-          e.stopPropagation();
-          marker.openPopup();
-        });
-      }, 50);
-    })(m);
-    if (isAdmin) {
-      (function(venue, marker) {
-        marker.on('popupopen', function() {
-          var el = marker.getPopup().getElement();
-          if (!el) return;
-          var existing = el.querySelector('.admin-edit-btn');
-          if (existing) return;
-          var btn = document.createElement('button');
-          btn.className = 'admin-edit-btn';
-          btn.textContent = '✏️ Edit this venue';
-          btn.onclick = function() { marker.closePopup(); openEditDrawer(venue); };
-          el.querySelector('.leaflet-popup-content').appendChild(btn);
-        });
-      })(v, m);
-    }
-    markers.push(m);
+      <script>
+        function copyText() {
+          const ta = document.getElementById("waText");
+          ta.select();
+          document.execCommand("copy");
+          document.getElementById("copied").style.display = "block";
+          setTimeout(() => document.getElementById("copied").style.display = "none", 3000);
+        }
+        function openWhatsApp() {
+          const text = document.getElementById("waText").value;
+          const encoded = encodeURIComponent(text);
+          window.open("https://wa.me/?text=" + encoded, "_blank");
+        }
+      </script>`;
   }
-  updateTips();
-  updateCounts();
+
+  const ui = HtmlService.createHtmlOutput(html)
+    .setTitle(`Open Mics — ${titleCase_(today)}`)
+    .setWidth(350);
+  SpreadsheetApp.getUi().showSidebar(ui);
 }
 
-// ── TOOLTIPS ──
-function updateTips(){
-  var show=map.getZoom()>=14;
-  var tips=document.querySelectorAll('.v-tip');
-  for(var i=0;i<tips.length;i++){
-    if(show) tips[i].classList.remove('v-tip-hide');
-    else tips[i].classList.add('v-tip-hide');
-  }
-}
-map.on('zoomend',updateTips);
 
-// ── COUNTS ──
-function updateCounts(){
-  var total=venues.filter(function(v){ return v.lat&&v.lng; }).length;
-  var el=document.getElementById('cnt-ALL');
-  if(el) el.textContent=total+' venues';
-  DAYS.forEach(function(d){
-    var n=venues.filter(function(v){ return v.day===d&&v.lat&&v.lng; }).length;
-    var el2=document.getElementById('cnt-'+d);
-    if(el2) el2.textContent=n+' venues';
-  });
-}
+// ─── DAILY EMAIL SUMMARY ──────────────────────────────────────────────────────
 
-// ── FILTER DRAWER ──
-var drawer=document.getElementById('drawer');
-var backdrop=document.getElementById('backdrop');
-var filterBtn=document.getElementById('filterBtn');
+const EMAIL_RECIPIENT_ = "usman.imtiazi@gmail.com";
 
-function openDrawer(){ drawer.classList.add('show'); backdrop.classList.add('show'); filterBtn.classList.add('on'); }
-function closeDrawer(){ drawer.classList.remove('show'); backdrop.classList.remove('show'); filterBtn.classList.remove('on'); }
+/**
+ * Sends today's open mic summary to EMAIL_RECIPIENT_.
+ * Set a daily time trigger on this function via createEmailTrigger().
+ */
+function sendDailyEmailSummary() {
+  const days = ["SUNDAY","MONDAY","TUESDAY","WEDNESDAY","THURSDAY","FRIDAY","SATURDAY"];
+  const today = days[new Date().getDay()];
+  const venues = getActiveVenuesNoGeocode_().filter(v => v.day === today);
 
-filterBtn.addEventListener('click',function(){ drawer.classList.contains('show')?closeDrawer():openDrawer(); });
-backdrop.addEventListener('click',closeDrawer);
-
-document.getElementById('dayList').addEventListener('click',function(e){
-  var item=e.target.closest('.day-item');
-  if(!item) return;
-  document.querySelectorAll('.day-item').forEach(function(el){ el.classList.remove('active'); });
-  item.classList.add('active');
-  activeDay=item.dataset.day;
-  render();
-  if(currentView==="list") renderList();
-  // Update badge
-  var badge=document.getElementById('dayBadge');
-  var dayShorts={MONDAY:'Mo',TUESDAY:'Tu',WEDNESDAY:'We',THURSDAY:'Th',FRIDAY:'Fr',SATURDAY:'Sa',SUNDAY:'Su'};
-  if(activeDay==='ALL'){ badge.style.display='none'; }
-  else { badge.style.display='flex'; badge.textContent=dayShorts[activeDay]||activeDay.slice(0,2); }
-  closeDrawer();
-});
-
-// ── SEARCH ──
-var searchInput=document.getElementById('searchInput');
-var searchX=document.getElementById('searchX');
-var searchResults=document.getElementById('searchResults');
-
-searchInput.addEventListener('input',function(){
-  var q=searchInput.value.trim();
-  filter=q.toLowerCase();
-  searchX.style.display=q?'block':'none';
-  if(q.length<2){ searchResults.style.display='none'; render(); if(currentView==='list') renderList(); return; }
-  var matches=venues.filter(function(v){ return v.name.toLowerCase().indexOf(q.toLowerCase())!==-1||v.location.toLowerCase().indexOf(q.toLowerCase())!==-1; }).slice(0,8);
-  if(!matches.length){ searchResults.style.display='none'; render(); return; }
-  searchResults.innerHTML='';
-  matches.forEach(function(v){
-    var el=document.createElement('div');
-    el.className='s-item';
-    el.innerHTML='<div class="s-item-name"><div>'+v.name+'</div><div class="s-item-loc">'+v.location+'</div></div><span class="s-day-pill" style="background:'+(COLOURS[v.day]||'#888')+'">'+v.day.slice(0,3)+'</span>';
-    el.addEventListener('click',function(){
-      map.setView([v.lat,v.lng],15);
-      searchResults.style.display='none';
-      searchInput.value=v.name;
-      filter='';
-      render();
-      for(var i=0;i<markers.length;i++){
-        var ll=markers[i].getLatLng();
-        if(Math.abs(ll.lat-v.lat)<0.0001&&Math.abs(ll.lng-v.lng)<0.0001){ markers[i].openPopup(); break; }
-      }
-    });
-    searchResults.appendChild(el);
-  });
-  searchResults.style.display='block';
-  render();
-});
-
-searchX.addEventListener('click',function(){ searchInput.value=''; filter=''; searchX.style.display='none'; searchResults.style.display='none'; render(); if(currentView==="list") renderList(); });
-document.addEventListener('click',function(e){ if(!searchInput.contains(e.target)&&!searchResults.contains(e.target)) searchResults.style.display='none'; });
-
-// ── LOCATION ──
-var lastLat = null, lastLng = null;
-
-function placeLocMarker(lat, lng, pan) {
-  lastLat = lat; lastLng = lng;
-  if(locMarker) map.removeLayer(locMarker);
-  locMarker = L.marker([lat, lng], {
-    icon: L.divIcon({className:'', html:'<div class="loc-dot"></div>', iconSize:[14,14], iconAnchor:[7,7]}),
-    zIndexOffset: 1000
-  }).addTo(map).bindPopup('<div class="loc-popup">📍 You are here</div>', {closeButton:false});
-  if(pan) map.panTo([lat, lng]);
-}
-
-function locate(pan) {
-  if(!navigator.geolocation) return;
-  // If we already have a location, use it instantly then refresh in background
-  if(lastLat && pan) map.panTo([lastLat, lastLng]);
-  navigator.geolocation.getCurrentPosition(
-    function(pos) { placeLocMarker(pos.coords.latitude, pos.coords.longitude, pan && !lastLat); },
-    function() {},
-    { maximumAge: 30000, timeout: 10000, enableHighAccuracy: false }
-  );
-}
-
-// Watch position continuously in background for fast updates
-if(navigator.geolocation) {
-  navigator.geolocation.watchPosition(
-    function(pos) { placeLocMarker(pos.coords.latitude, pos.coords.longitude, false); },
-    function() {},
-    { maximumAge: 10000, timeout: 15000, enableHighAccuracy: false }
-  );
-}
-
-document.getElementById('locBtn').addEventListener('click', function() {
-  if(lastLat) {
-    // Already have location — pan instantly
-    map.panTo([lastLat, lastLng]);
-  } else {
-    locate(true);
-  }
-});
-
-
-// ── LIST VIEW ──
-var currentView = 'map';
-var DAYS_ORDER = ['MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY','SUNDAY'];
-var equipFilters = { backingTracks: false, piano: false };
-
-// Equipment filter helpers
-function hasBacking(v) {
-  var val = (v.backingTracks || '').toLowerCase();
-  return val === 'yes' || val === 'possible';
-}
-
-function hasPiano(v) {
-  var setup = (v.equipment || '').toLowerCase();
-  return setup.indexOf('piano') !== -1 || setup.indexOf('keyboard') !== -1 || setup.indexOf('keys') !== -1;
-}
-
-function matchesEquip(v) {
-  if (equipFilters.backingTracks && !hasBacking(v)) return false;
-  if (equipFilters.piano && !hasPiano(v)) return false;
-  return true;
-}
-
-// Wire equipment filter clicks
-document.getElementById('equipList').addEventListener('click', function(e) {
-  var item = e.target.closest('.equip-item');
-  if (!item) return;
-  var key = item.dataset.filter;
-  equipFilters[key] = !equipFilters[key];
-  item.classList.toggle('active', equipFilters[key]);
-  render();
-  if (currentView === 'list') renderList();
-});
-
-// Distance helpers
-function calcDistance(lat1, lng1, lat2, lng2) {
-  var R = 3958.8; // miles
-  var dLat = (lat2 - lat1) * Math.PI / 180;
-  var dLng = (lng2 - lng1) * Math.PI / 180;
-  var a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-    Math.sin(dLng/2) * Math.sin(dLng/2);
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-}
-
-function formatDist(miles) {
-  if (miles < 0.1) return 'nearby';
-  if (miles < 10) return miles.toFixed(1) + ' mi';
-  return Math.round(miles) + ' mi';
-}
-
-var mapViewBtn = document.getElementById('mapViewBtn');
-var listViewBtn = document.getElementById('listViewBtn');
-if (mapViewBtn) mapViewBtn.addEventListener('click', function() { setView('map'); });
-if (listViewBtn) listViewBtn.addEventListener('click', function() { setView('list'); });
-
-function setView(v) {
-  currentView = v;
-  var mapEl = document.getElementById('map');
-  var listEl = document.getElementById('listView');
-  var locBtn = document.getElementById('locBtn');
-  var mapBtn = document.getElementById('mapViewBtn');
-  var listBtn = document.getElementById('listViewBtn');
-  if (v === 'map') {
-    mapEl.style.display = 'block';
-    listEl.style.display = 'none';
-    locBtn.style.display = '';
-    mapBtn.classList.add('active');
-    listBtn.classList.remove('active');
-  } else {
-    mapEl.style.display = 'none';
-    listEl.style.display = 'block';
-    locBtn.style.display = 'none';
-    mapBtn.classList.remove('active');
-    listBtn.classList.add('active');
-    renderList();
-  }
-}
-
-function renderList() {
-  var listEl = document.getElementById('listView');
-  var q = filter.toLowerCase();
-  var filtered = venues.filter(function(v) {
-    var dayMatch = activeDay === 'ALL' || v.day === activeDay;
-    var nameMatch = !q || v.name.toLowerCase().indexOf(q) !== -1 || v.location.toLowerCase().indexOf(q) !== -1;
-    return dayMatch && nameMatch && matchesEquip(v);
-  });
-
-  if (!filtered.length) {
-    listEl.innerHTML = '<div class="list-empty">No venues found</div>';
+  if (!venues.length) {
+    Logger.log(`No active open mics for ${today} — no email sent.`);
     return;
   }
 
-  // Group by day
-  var byDay = {};
-  DAYS_ORDER.forEach(function(d) { byDay[d] = []; });
-  filtered.forEach(function(v) { if (byDay[v.day]) byDay[v.day].push(v); });
+  // Plain text — identical to the WhatsApp sidebar message
+  let plain = `🎤 Open Mics in London Today — (${titleCase_(today)})\n\n`;
+  venues.forEach(v => {
+    plain += `*${v.name}*`;
+    if (v.time) plain += ` · ${v.time}`;
+    plain += `\n`;
+    plain += `📍 ${v.location}\n\n`;
+  });
+  plain += `🗺️ Full map: https://openmicfamily.github.io\n`;
 
-  // Sort each day by distance (if available) or time
-  DAYS_ORDER.forEach(function(d) {
-    byDay[d].sort(function(a, b) {
-      if (lastLat && a.lat && b.lat) {
-        var da = calcDistance(lastLat, lastLng, a.lat, a.lng);
-        var db = calcDistance(lastLat, lastLng, b.lat, b.lng);
-        return da - db;
-      }
-      return (a.time || 'zzz').localeCompare(b.time || 'zzz');
-    });
+
+  // WhatsApp link
+  const waUrl = 'https://wa.me/?text=' + encodeURIComponent(plain);
+
+  // HTML email with WhatsApp button at top
+  const htmlPlain = plain.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+  const htmlBody = `<html><head><meta charset="UTF-8"></head><body style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:20px;">
+    <a href="${waUrl}" style="display:block;background:#25D366;color:#fff;text-align:center;padding:20px;border-radius:14px;font-size:20px;font-weight:bold;text-decoration:none;margin-bottom:20px;letter-spacing:0.01em;">
+      📲 Tap to send today's open mics on WhatsApp
+    </a>
+    <div style="background:#1a1a1a;border-radius:12px;padding:20px;">
+      <p style="font-family:monospace;white-space:pre-wrap;color:#f0ece4;font-size:13px;line-height:1.6;margin:0;">${htmlPlain}</p>
+    </div>
+  </body></html>`;
+
+  MailApp.sendEmail({
+    to: EMAIL_RECIPIENT_,
+    subject: `🎤 Open Mics Today — ${titleCase_(today)} (${venues.length} events)`,
+    body: plain,
+    htmlBody: htmlBody
   });
 
-  var html = '';
-  DAYS_ORDER.forEach(function(d) {
-    if (!byDay[d].length) return;
-    var colour = COLOURS[d] || '#888';
-    var label = d.charAt(0) + d.slice(1).toLowerCase();
-    html += '<div class="list-day-header"><div class="list-day-dot" style="background:' + colour + '"></div>' + label + '</div>';
-    byDay[d].forEach(function(v) {
-      var mapsUrl = 'https://maps.google.com/?q=' + encodeURIComponent(v.name + ', ' + v.location);
-      var timeStr = v.time ? '<span>🕐 ' + v.time + '</span>' : '';
-      var locStr = '<span>📍 ' + v.location + '</span>';
-      var distStr = '';
-      if (lastLat && v.lat && v.lng) {
-        var d = calcDistance(lastLat, lastLng, v.lat, v.lng);
-        distStr = '<span class="venue-distance">' + formatDist(d) + '</span>';
-      }
-      var meta = '<div class="venue-card-meta-left">' + timeStr + locStr + '</div>';
-
-      var bodyRows = '';
-      if (v.frequency) bodyRows += '<div class="venue-card-row"><span class="venue-card-icon">🔁</span><span>' + v.frequency + '</span></div>';
-      if (v.style)     bodyRows += '<div class="venue-card-row"><span class="venue-card-icon">🎵</span><span>' + v.style + '</span></div>';
-      if (v.equipment) bodyRows += '<div class="venue-card-row"><span class="venue-card-icon">🎸</span><span>' + v.equipment + '</span></div>';
-      if (v.notes)     bodyRows += '<div class="venue-card-row"><span class="venue-card-icon">📝</span><span>' + v.notes + '</span></div>';
-      if (v.contact)   bodyRows += '<div class="venue-card-row"><span class="venue-card-icon">📞</span><span>' + v.contact + '</span></div>';
-      if (v.instagram) bodyRows += '<div class="venue-card-row"><span class="venue-card-icon">📷</span><span>' + v.instagram + '</span></div>';
-      if (v.backingTracks) bodyRows += '<div class="venue-card-row"><span class="venue-card-icon">🎶</span><span>Backing tracks: ' + v.backingTracks + '</span></div>';
-      if (v.under18s)  bodyRows += '<div class="venue-card-row"><span class="venue-card-icon">👶</span><span>' + v.under18s + '</span></div>';
-
-      html += '<div class="venue-card" onclick="toggleCard(this)">' +
-        '<div class="venue-card-header">' +
-          '<div class="venue-card-dot" style="background:' + colour + '"></div>' +
-          '<div class="venue-card-main">' +
-            '<div class="venue-card-name">' + v.name + '</div>' +
-            '<div class="venue-card-meta">' + meta + distStr + '</div>' +
-          '</div>' +
-          '<div class="venue-card-chevron">▼</div>' +
-        '</div>' +
-        '<div class="venue-card-body">' +
-          bodyRows +
-          '<a class="venue-maps-btn" href="' + mapsUrl + '" target="_blank" onclick="event.stopPropagation()">Open in Google Maps →</a>' +
-        '</div>' +
-      '</div>';
-    });
-  });
-
-  listEl.innerHTML = html;
+  Logger.log(`✅ Email sent to ${EMAIL_RECIPIENT_} — ${venues.length} venues for ${today}`);
 }
 
-function toggleCard(card) {
-  card.classList.toggle('open');
+/**
+ * Creates a daily trigger to send the email summary every morning at 8am.
+ * Run this ONCE manually. Safe to re-run — removes old triggers first.
+ */
+function createEmailTrigger() {
+  ScriptApp.getProjectTriggers()
+    .filter(t => t.getHandlerFunction() === "sendDailyEmailSummary")
+    .forEach(t => ScriptApp.deleteTrigger(t));
+
+  ScriptApp.newTrigger("sendDailyEmailSummary")
+    .timeBased()
+    .everyDays(1)
+    .atHour(8) // 8am
+    .inTimezone("Europe/London")
+    .create();
+
+  Logger.log("⏰ Daily email trigger set — summary will be sent every morning at 8am London time.");
 }
 
-// ── ADMIN MODE ──
-var isAdmin = window.location.search.indexOf('admin=true') !== -1;
-if (isAdmin) document.body.classList.add('admin-mode');
 
-var editDrawer = document.getElementById('editDrawer');
-var editBackdrop = document.getElementById('editBackdrop');
-var currentEditVenue = null;
 
-function openEditDrawer(v) {
-  currentEditVenue = v;
-  document.getElementById('editDrawerTitle').textContent = 'Edit: ' + v.name;
-  // Try venueId from object first, fall back to reading from popup DOM
-  var vid = v.venueId || '';
-  if (!vid) {
-    var store = document.querySelector('.venue-id-store');
-    if (store) vid = store.textContent.trim();
+// ─── VENUE ID SYSTEM ──────────────────────────────────────────────────────────
+// Each venue gets a unique ID (e.g. OM001) in a dedicated column.
+// This prevents false closure alerts when venues are renamed or locations tweaked.
+// The ID column is hidden from normal view but read by the script.
+
+const ID_COL_ = 22; // Column W (index 21, 1-indexed 22) — adjust if needed
+
+/**
+ * Run ONCE to assign unique IDs to all active venues that don't have one yet.
+ * Safe to re-run — skips venues that already have an ID.
+ */
+function assignVenueIDs() {
+  const sheet = getSheet_();
+  const lastRow = sheet.getLastRow();
+  const values = sheet.getRange(1, 1, lastRow, ID_COL_).getValues();
+  const fontLines = sheet.getRange(1, 3, lastRow, 1).getFontLines();
+
+  // Ensure header
+  sheet.getRange(1, ID_COL_).setValue('Venue ID');
+
+  // Find highest existing ID number
+  let maxId = 0;
+  for (let i = 1; i < values.length; i++) {
+    const existing = (values[i][ID_COL_ - 1] || '').toString().trim();
+    if (existing.startsWith('OM')) {
+      const num = parseInt(existing.slice(2));
+      if (!isNaN(num) && num > maxId) maxId = num;
+    }
   }
-  document.getElementById('editVenueId').value = vid;
-  document.getElementById('editName').value = v.name || '';
-  document.getElementById('editLocation').value = v.location || '';
-  document.getElementById('editDay').value = v.day || 'MONDAY';
-  document.getElementById('editTime').value = v.time || '';
-  document.getElementById('editFrequency').value = v.frequency || '';
-  document.getElementById('editStyle').value = v.style || '';
-  document.getElementById('editEquipment').value = v.equipment || '';
-  document.getElementById('editNotes').value = v.notes || '';
-  document.getElementById('editStatus').textContent = '';
-  editDrawer.classList.add('show');
-  editBackdrop.classList.add('show');
+
+  let assigned = 0;
+  for (let i = 1; i < values.length; i++) {
+    const r = values[i];
+    const colA = (r[0] || '').toString().trim();
+    const colC = (r[2] || '').toString().trim();
+    const existing = (r[ID_COL_ - 1] || '').toString().trim();
+
+    if (!colA || !colC) continue;
+    if (colA.toUpperCase() === colC.toUpperCase()) continue;
+    if (fontLines[i][0] === 'line-through') continue;
+    if (existing) continue; // Already has an ID
+
+    maxId++;
+    const newId = 'OM' + String(maxId).padStart(3, '0');
+    sheet.getRange(i + 1, ID_COL_).setValue(newId);
+    Logger.log(`Assigned ${newId} to "${colC}"`);
+    assigned++;
+  }
+
+  Logger.log(`✅ Assigned ${assigned} new IDs.`);
+  SpreadsheetApp.getActiveSpreadsheet().toast(
+    `Assigned ${assigned} new venue IDs.`,
+    '✅ Venue IDs', 5
+  );
 }
 
-function closeEditDrawer() {
-  editDrawer.classList.remove('show');
-  editBackdrop.classList.remove('show');
-}
+// ─── CLOSED VENUE DETECTOR ────────────────────────────────────────────────────
+/**
+ * Compares current active venues against a stored snapshot.
+ * If any venues have become inactive since last run, sends an alert email.
+ * Run on a trigger (e.g. every 2 hours alongside saveKMLToDrive).
+ */
+function checkForClosedVenues() {
+  const props = PropertiesService.getScriptProperties();
+  const previousJson = props.getProperty("activeVenueIDs");
+  const previous = previousJson ? JSON.parse(previousJson) : null;
 
-document.getElementById('editCancelBtn').addEventListener('click', closeEditDrawer);
-editBackdrop.addEventListener('click', closeEditDrawer);
+  // Read current active venue IDs and names from sheet
+  const sheet = getSheet_();
+  const lastRow = sheet.getLastRow();
+  const values = sheet.getRange(1, 1, lastRow, ID_COL_).getValues();
+  const fontLines = sheet.getRange(1, 3, lastRow, 1).getFontLines();
 
-document.getElementById('editSaveBtn').addEventListener('click', function() {
-  var btn = this;
-  var status = document.getElementById('editStatus');
-  var data = {
-    venueId:   document.getElementById('editVenueId').value,
-    name:      document.getElementById('editName').value.trim(),
-    location:  document.getElementById('editLocation').value.trim(),
-    day:       document.getElementById('editDay').value,
-    startTime: document.getElementById('editTime').value.trim(),
-    frequency: document.getElementById('editFrequency').value.trim(),
-    style:     document.getElementById('editStyle').value.trim(),
-    equipment: document.getElementById('editEquipment').value.trim(),
-    notes:     document.getElementById('editNotes').value.trim(),
-  };
+  const current = {};
+  for (let i = 1; i < values.length; i++) {
+    const r = values[i];
+    const colA = (r[0] || '').toString().trim();
+    const colC = (r[2] || '').toString().trim();
+    const colJ = (r[9] || '').toString().trim().toLowerCase();
+    const mapStatus = (r[17] || '').toString().trim().toUpperCase();
+    const venueId = (r[ID_COL_ - 1] || '').toString().trim();
 
-  if (!data.name || !data.location || !data.venueId) {
-    status.textContent = '⚠️ Name, location and venue ID are required.';
+    if (!colA || !colC) continue;
+    if (colA.toUpperCase() === colC.toUpperCase()) continue;
+    if (fontLines[i][0] === 'line-through') continue;
+    if (colJ.includes('cancelled') || colJ.includes('on hold') || colJ.includes('closed')) continue;
+    if (mapStatus === 'EXCLUDE') continue;
+    if (!venueId) continue; // Skip venues without IDs
+
+    current[venueId] = colC;
+  }
+
+  // Save current snapshot
+  props.setProperty("activeVenueIDs", JSON.stringify(current));
+
+  if (!previous) {
+    Logger.log("📸 First run — ID snapshot saved. No comparison yet.");
     return;
   }
 
-  btn.textContent = 'Saving...';
-  btn.disabled = true;
+  // Find IDs that were active before but aren't now
+  const newlyClosed = Object.keys(previous).filter(id => !current[id]);
 
-  var xhr = new XMLHttpRequest();
-  xhr.open('GET', 'https://script.google.com/macros/s/AKfycbzzky7_wAt1wdRRJDGF_OHA55dyXhuxolhUtLm_RG-fuKcCYsxVNf9p3Av82eOvNn3A_A/exec?action=editVenue&data=' + encodeURIComponent(JSON.stringify(data)));
-  xhr.onload = function() {
-    try {
-      var res = JSON.parse(xhr.responseText);
-      if (res.success) {
-        status.style.color = '#5aaa6e';
-        status.textContent = '✅ Saved! Reload the map to see changes.';
-        btn.textContent = 'Saved ✓';
-      } else {
-        throw new Error(res.error);
-      }
-    } catch(e) {
-      status.style.color = '#e05c5c';
-      status.textContent = '❌ Error: ' + e.message;
-      btn.textContent = 'Save changes';
-      btn.disabled = false;
-    }
-  };
-  xhr.onerror = function() {
-    status.style.color = '#e05c5c';
-    status.textContent = '❌ Network error. Try again.';
-    btn.textContent = 'Save changes';
-    btn.disabled = false;
-  };
-  xhr.send();
-});
+  if (newlyClosed.length === 0) {
+    Logger.log("✅ No newly closed venues detected.");
+    return;
+  }
 
-// ── LOAD ──
-var xhr = new XMLHttpRequest();
-xhr.open('GET', 'https://script.google.com/macros/s/AKfycbzzky7_wAt1wdRRJDGF_OHA55dyXhuxolhUtLm_RG-fuKcCYsxVNf9p3Av82eOvNn3A_A/exec?format=json');
-xhr.onload = function() {
-  if (xhr.status === 200) {
-    try {
-      venues = JSON.parse(xhr.responseText);
-      render();
-      document.getElementById('loading').style.display = 'none';
-      clearInterval(si);
-      locate(true);
-    } catch(e) {
-      document.getElementById('loading').innerHTML = '<h2>Error</h2><p>' + e.message + '</p>';
+  const closedNames = newlyClosed.map(id => previous[id] + ' (' + id + ')');
+  const subject = `⚠️ Open Mic Alert — ${newlyClosed.length} venue${newlyClosed.length > 1 ? "s" : ""} marked inactive`;
+  const body = `The following open mic${newlyClosed.length > 1 ? "s have" : " has"} been marked inactive on the spreadsheet:\n\n${closedNames.map(n => `• ${n}`).join("\n")}\n\nNote: if you simply renamed a venue, make sure it still has its Venue ID in column W.\n\nPlease review the spreadsheet:\nhttps://tinyurl.com/OpenMicFamily\n\nThis is an automated alert from your Open Mic Sheet.`;
+
+  MailApp.sendEmail({
+    to: EMAIL_RECIPIENT_,
+    subject: subject,
+    body: body
+  });
+
+  Logger.log(`⚠️ Alert sent — newly closed IDs: ${newlyClosed.join(", ")}`);
+}
+
+// ─── MONTHLY NEW VENUES SUMMARY ───────────────────────────────────────────────
+/**
+ * On the 1st of each month, emails a summary of venues added in the previous month.
+ * Detects new venues by comparing against a stored snapshot of venue names.
+ * Run daily — only sends email on the 1st of the month.
+ */
+function monthlyNewVenuesSummary() {
+  const today = new Date();
+  if (today.getDate() !== 1) return; // Only run on 1st of month
+
+  const props = PropertiesService.getScriptProperties();
+  const previousJson = props.getProperty("monthlyVenueSnapshot");
+  const previous = previousJson ? new Set(JSON.parse(previousJson)) : null;
+
+  const current = getActiveVenuesNoGeocode_();
+  const currentNames = current.map(v => v.name);
+  const currentSet = new Set(currentNames);
+
+  // Save new snapshot for next month
+  props.setProperty("monthlyVenueSnapshot", JSON.stringify(currentNames));
+
+  if (!previous) {
+    Logger.log("📸 First run — monthly snapshot saved.");
+    return;
+  }
+
+  const newVenues = current.filter(v => !previous.has(v.name));
+
+  if (newVenues.length === 0) {
+    Logger.log("No new venues added last month.");
+    return;
+  }
+
+  const monthName = new Date(today.getFullYear(), today.getMonth() - 1, 1)
+    .toLocaleString("en-GB", { month: "long" });
+
+  // Plain text message — ready to paste into WhatsApp
+  let msg = `🎤 New Open Mics Added in ${monthName}\n\n`;
+  newVenues.forEach(v => {
+    msg += `*${v.name}*`;
+    if (v.time) msg += ` · ${v.time}`;
+    msg += `\n`;
+    msg += `📍 ${v.location}\n`;
+    const mapsUrl = `https://maps.google.com/?q=${encodeURIComponent(v.name + ", " + v.location)}`;
+    msg += `${mapsUrl}\n\n`;
+  });
+  msg += `🗺️ Full map: https://goo.gl/maps/4uNM1p4UgM3H4z2a9\n`;
+  msg += `📋 More details on spreadsheet: https://tinyurl.com/OpenMicFamily`;
+
+  MailApp.sendEmail({
+    to: EMAIL_RECIPIENT_,
+    subject: `🎤 ${newVenues.length} New Open Mic${newVenues.length > 1 ? "s" : ""} Added in ${monthName}`,
+    body: msg
+  });
+
+  Logger.log(`✅ Monthly new venues email sent — ${newVenues.length} new venues.`);
+}
+
+/**
+ * Creates a daily trigger for both checkForClosedVenues and monthlyNewVenuesSummary.
+ * Run ONCE manually.
+ */
+function createMonitoringTriggers() {
+  // Remove existing triggers for these functions
+  ["checkForClosedVenues", "monthlyNewVenuesSummary"].forEach(fnName => {
+    ScriptApp.getProjectTriggers()
+      .filter(t => t.getHandlerFunction() === fnName)
+      .forEach(t => ScriptApp.deleteTrigger(t));
+  });
+
+  // Check for closed venues every 2 hours (alongside KML save)
+  ScriptApp.newTrigger("checkForClosedVenues")
+    .timeBased()
+    .everyHours(2)
+    .create();
+
+  // Monthly new venues — run daily at 9am, function self-limits to 1st of month
+  ScriptApp.newTrigger("monthlyNewVenuesSummary")
+    .timeBased()
+    .everyDays(1)
+    .atHour(9)
+    .inTimezone("Europe/London")
+    .create();
+
+  // Daily geocoding check — runs at 6am, skips already-cached venues
+  ScriptApp.getProjectTriggers()
+    .filter(t => t.getHandlerFunction() === "geocodeAllAndCache")
+    .forEach(t => ScriptApp.deleteTrigger(t));
+
+  ScriptApp.newTrigger("geocodeAllAndCache")
+    .timeBased()
+    .everyDays(1)
+    .atHour(6)
+    .inTimezone("Europe/London")
+    .create();
+
+  Logger.log("⏰ Monitoring triggers created.");
+}
+
+
+
+
+// ─── ONE-OFF CLEANUP ──────────────────────────────────────────────────────────
+/**
+ * Run ONCE to clean up column layout:
+ * - Renames R1 header from "Lng" back to "Map Status"
+ * - Clears the empty Q column header if present
+ * - Updates the script header comment
+ * Safe to re-run — only touches headers, not data.
+ */
+function cleanupColumnHeaders() {
+  const sheet = getSheet_();
+
+  // Fix R1 — was overwritten with "Lng", should be "Map Status"
+  sheet.getRange(1, 18).setValue('Map Status');
+  Logger.log('✅ R1 set to "Map Status"');
+
+  // Clear Q1 if it says "Lat" or "Lng" (it should be empty)
+  const q1 = sheet.getRange(1, 17).getValue().toString().trim();
+  if (q1 === 'Lat' || q1 === 'Lng' || q1 === '') {
+    sheet.getRange(1, 17).setValue('');
+    Logger.log('✅ Q1 cleared');
+  }
+
+  // Confirm S1 and T1 are correctly labelled
+  sheet.getRange(1, 19).setValue('Lat');
+  sheet.getRange(1, 20).setValue('Lng');
+  Logger.log('✅ S1=Lat, T1=Lng confirmed');
+
+  SpreadsheetApp.getActiveSpreadsheet().toast(
+    'Column headers cleaned up successfully.',
+    '✅ Cleanup done', 5
+  );
+}
+
+
+// ─── HOST CONFIRMATION SYSTEM ─────────────────────────────────────────────────
+//
+// Monthly email to each host with a one-click confirm link.
+// Clicking the link updates the Checked/Updated Date column for their venue.
+// Venues unconfirmed for 50+ days are flagged in the JSON for the map to show.
+//
+// Setup: run createConfirmationSecret_() once to generate the secret token salt.
+// Trigger: run sendMonthlyConfirmationEmails() on a monthly schedule.
+
+const CONFIRMATION_SECRET_KEY_ = 'confirmationSecret';
+const CONFIRMATION_TEST_MODE_ = true; // Set to false when ready to email real hosts
+const CONFIRM_ACTION_ = 'confirm';
+const STALE_DAYS_ = 50;
+
+/**
+ * Run ONCE to generate and store a secret used for confirmation tokens.
+ */
+function createConfirmationSecret_() {
+  const props = PropertiesService.getScriptProperties();
+  if (props.getProperty(CONFIRMATION_SECRET_KEY_)) {
+    Logger.log('Secret already exists — skipping.');
+    return;
+  }
+  const secret = Utilities.getUuid() + Utilities.getUuid();
+  props.setProperty(CONFIRMATION_SECRET_KEY_, secret);
+  Logger.log('✅ Confirmation secret created.');
+}
+
+/**
+ * Generate a confirmation token for a venue ID.
+ */
+
+/**
+ * Returns true if the checked date is more than STALE_DAYS_ days ago (or missing).
+ */
+function isStale_(dateStr) {
+  if (!dateStr) return true;
+  const parts = dateStr.match(/(\d{1,2})[^\d](\w+)[^\d](\d{4})/);
+  if (!parts) return false; // can't parse — don't flag
+  const parsed = new Date(dateStr);
+  if (isNaN(parsed)) return false;
+  const daysDiff = (new Date() - parsed) / (1000 * 60 * 60 * 24);
+  return daysDiff > STALE_DAYS_;
+}
+
+function generateToken_(venueId) {
+  const props = PropertiesService.getScriptProperties();
+  const secret = props.getProperty(CONFIRMATION_SECRET_KEY_) || 'fallback-secret';
+  const raw = venueId + ':' + secret;
+  const bytes = Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, raw);
+  return bytes.map(b => ('0' + (b & 0xFF).toString(16)).slice(-2)).join('').slice(0, 16);
+}
+
+/**
+ * Build a confirmation URL for a venue.
+ */
+function confirmUrl_(venueId) {
+  const scriptUrl = ScriptApp.getService().getUrl();
+  const token = generateToken_(venueId);
+  return `${scriptUrl}?action=${CONFIRM_ACTION_}&id=${encodeURIComponent(venueId)}&token=${token}`;
+}
+
+/**
+ * Send monthly confirmation emails to all hosts with an email address on file.
+ * Safe to run manually — will only email venues that have a host email.
+ */
+function sendMonthlyConfirmationEmails() {
+  const sheet = getSheet_();
+  const lastRow = sheet.getLastRow();
+  const values = sheet.getRange(1, 1, lastRow, 22).getValues();
+  const fontLines = sheet.getRange(1, 3, lastRow, 1).getFontLines();
+
+  const SCRIPT_URL = ScriptApp.getService().getUrl();
+  let sent = 0;
+  let skipped = 0;
+
+  for (let i = 1; i < values.length; i++) {
+    const r = values[i];
+    const colA = (r[0] || '').toString().trim();
+    const colC = (r[2] || '').toString().trim();
+    const colE = (r[4] || '').toString().trim();
+    const colL = (r[11] || '').toString().trim(); // Email
+    const colR = (r[17] || '').toString().trim().toUpperCase(); // Map Status
+    const venueId = (r[21] || '').toString().trim(); // Venue ID
+
+    if (!colA || !colC || colA.toUpperCase() === colC.toUpperCase()) continue;
+    if (fontLines[i][0] === 'line-through') continue;
+    if (colR === 'EXCLUDE' || colR.includes('SKIPPED') || colR.includes('INACTIVE')) continue;
+    if (!colL || !colL.includes('@')) { skipped++; continue; }
+    if (!venueId) { skipped++; continue; }
+
+    const confirmLink = confirmUrl_(venueId);
+    const day = titleCase_(colA);
+
+    const recipient = CONFIRMATION_TEST_MODE_ ? EMAIL_RECIPIENT_ : colL;
+    MailApp.sendEmail({
+      to: recipient,
+      subject: CONFIRMATION_TEST_MODE_
+        ? `[TEST - would go to ${colL}] 🎤 Is ${colC} still running?`
+        : `🎤 Is ${colC} still running? Quick confirmation needed`,
+      htmlBody: `
+        <div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:24px;">
+          <h2 style="color:#e8c547;font-family:Georgia,serif;">London <em>Open Mics</em></h2>
+          <p>Hi,</p>
+          <p>We just want to check that <strong>${colC}</strong> (${day}s, ${colE}) is still running.</p>
+          <p>It only takes one click to confirm:</p>
+          <a href="${confirmLink}" style="display:inline-block;margin:16px 0;padding:14px 28px;background:#e8c547;color:#000;text-decoration:none;border-radius:8px;font-weight:bold;font-size:16px;">
+            ✅ Yes, we're still running!
+          </a>
+          <p style="color:#888;font-size:13px;">If your open mic has stopped or is on hiatus, simply don't click the link — it will be flagged for review after 50 days.</p>
+          <p style="color:#888;font-size:13px;">To update your listing details, reply to this email or visit <a href="https://openmicfamily.github.io">openmicfamily.github.io</a>.</p>
+          <hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+          <p style="color:#aaa;font-size:11px;">You're receiving this because your email is listed as the host contact for ${colC} on the London Open Mics community map.</p>
+        </div>
+      `
+    });
+
+    sent++;
+    Utilities.sleep(200); // avoid rate limiting
+  }
+
+  Logger.log(`✅ Confirmation emails sent: ${sent} | Skipped (no email): ${skipped}`);
+  SpreadsheetApp.getActiveSpreadsheet().toast(
+    `Sent ${sent} confirmation emails. ${skipped} venues skipped (no email on file).`,
+    '📧 Confirmation emails sent', 8
+  );
+}
+
+/**
+ * Handle confirmation link click — called via doGet when action=confirm.
+ * Updates the Checked/Updated Date for the venue and returns a confirmation page.
+ */
+function handleConfirmation_(e) {
+  const venueId = e.parameter.id || '';
+  const token = e.parameter.token || '';
+
+  // Validate token
+  if (!venueId || token !== generateToken_(venueId)) {
+    return HtmlService.createHtmlOutput(`
+      <div style="font-family:sans-serif;text-align:center;padding:60px 20px;">
+        <h2>❌ Invalid confirmation link</h2>
+        <p>This link is invalid or has expired. Please contact the admin.</p>
+      </div>
+    `).setTitle('Invalid link');
+  }
+
+  // Find venue in sheet and update confirmation date
+  const sheet = getSheet_();
+  const lastRow = sheet.getLastRow();
+  const values = sheet.getRange(1, 1, lastRow, 22).getValues();
+
+  let venueName = '';
+  let found = false;
+
+  for (let i = 1; i < values.length; i++) {
+    const id = (values[i][21] || '').toString().trim();
+    if (id === venueId) {
+      venueName = (values[i][2] || '').toString().trim();
+      const today = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+      sheet.getRange(i + 1, 13).setValue(today);   // M: Checked/Updated Date
+      sheet.getRange(i + 1, 14).setValue('Host (email confirmation)'); // N: Checked/Updated By
+      found = true;
+      Logger.log(`✅ Confirmed: ${venueName} (${venueId})`);
+      break;
     }
   }
-};
-xhr.onerror = function() {
-  document.getElementById('loading').innerHTML = '<h2>Could not load</h2><p>Network error</p>';
-};
-xhr.send();
-</script>
-</body>
-</html>
+
+  if (!found) {
+    return HtmlService.createHtmlOutput(`
+      <div style="font-family:sans-serif;text-align:center;padding:60px 20px;">
+        <h2>⚠️ Venue not found</h2>
+        <p>We couldn't find this venue. Please contact the admin.</p>
+      </div>
+    `).setTitle('Not found');
+  }
+
+  return HtmlService.createHtmlOutput(`
+    <div style="font-family:sans-serif;text-align:center;padding:60px 20px;max-width:480px;margin:0 auto;">
+      <h1 style="color:#e8c547;font-family:Georgia,serif;">London <em>Open Mics</em></h1>
+      <div style="font-size:48px;margin:20px 0;">✅</div>
+      <h2>Thanks for confirming!</h2>
+      <p><strong>${venueName}</strong> is now marked as confirmed on the map.</p>
+      <p style="color:#888;font-size:14px;">We'll be in touch again in about a month.</p>
+      <a href="https://openmicfamily.github.io" style="display:inline-block;margin-top:24px;padding:12px 24px;background:#e8c547;color:#000;text-decoration:none;border-radius:8px;font-weight:bold;">View the map →</a>
+    </div>
+  `).setTitle('Confirmed!');
+}
+
+/**
+ * Create a monthly trigger for sendMonthlyConfirmationEmails (run once).
+ */
+function createConfirmationTrigger() {
+  // Remove existing
+  ScriptApp.getProjectTriggers()
+    .filter(t => t.getHandlerFunction() === 'sendMonthlyConfirmationEmails')
+    .forEach(t => ScriptApp.deleteTrigger(t));
+
+  ScriptApp.newTrigger('sendMonthlyConfirmationEmails')
+    .timeBased()
+    .onMonthDay(1)
+    .atHour(10)
+    .inTimezone('Europe/London')
+    .create();
+
+  Logger.log('✅ Monthly confirmation trigger created (1st of each month, 10am).');
+}
+
+
+// ─── VENUE EDIT (ADMIN) ───────────────────────────────────────────────────────
+
+function handleVenueEdit_(e) {
+  try {
+    const data = JSON.parse(e.parameter.data);
+    if (!data.venueId || !data.name) throw new Error('Missing venue ID or name');
+
+    const sheet = getSheet_();
+    const lastRow = sheet.getLastRow();
+    const values = sheet.getRange(1, 1, lastRow, 22).getValues();
+
+    let found = false;
+    for (let i = 1; i < values.length; i++) {
+      const id = (values[i][21] || '').toString().trim();
+      if (id !== data.venueId) continue;
+
+      // Update fields
+      if (data.name)      sheet.getRange(i + 1, 3).setValue(data.name);       // C
+      if (data.location)  sheet.getRange(i + 1, 5).setValue(data.location);   // E
+      if (data.day)       sheet.getRange(i + 1, 1).setValue(data.day);        // A
+      if (data.startTime !== undefined) sheet.getRange(i + 1, 9).setValue(data.startTime);  // I
+      if (data.frequency !== undefined) sheet.getRange(i + 1, 6).setValue(data.frequency);  // F
+      if (data.style !== undefined)     sheet.getRange(i + 1, 7).setValue(data.style);      // G
+      if (data.equipment !== undefined) sheet.getRange(i + 1, 8).setValue(data.equipment);  // H
+      if (data.notes !== undefined)     sheet.getRange(i + 1, 10).setValue(data.notes);     // J
+
+      // Update checked date
+      sheet.getRange(i + 1, 13).setValue(new Date().toLocaleDateString('en-GB'));
+      sheet.getRange(i + 1, 14).setValue('Admin (web edit)');
+
+      // Clear cached coords if location changed
+      if (data.location && data.location !== (values[i][4] || '').toString().trim()) {
+        sheet.getRange(i + 1, 19).setValue('');
+        sheet.getRange(i + 1, 20).setValue('');
+      }
+
+      found = true;
+      Logger.log(`✅ Edited: ${data.name} (${data.venueId})`);
+      break;
+    }
+
+    if (!found) throw new Error('Venue ID not found: ' + data.venueId);
+    return jsonResponse_({ success: true });
+
+  } catch(err) {
+    Logger.log('❌ Edit error: ' + err.message);
+    return jsonResponse_({ success: false, error: err.message });
+  }
+}
+
+// ─── VENUE SUBMISSION ─────────────────────────────────────────────────────────
+
+function handleVenueSubmission_(e) {
+  try {
+    const dataStr = e.parameter.data;
+    if (!dataStr) throw new Error('No data received');
+
+    const data = JSON.parse(dataStr);
+
+    // Basic validation
+    if (!data.name || !data.location || !data.day || !data.startTime) {
+      return jsonResponse_({ success: false, error: 'Missing required fields' });
+    }
+
+    const sheet = getSheet_();
+    const lastRow = sheet.getLastRow();
+
+    // Find next available Venue ID
+    const values = sheet.getRange(1, 1, lastRow, 22).getValues();
+    let maxId = 0;
+    for (let i = 1; i < values.length; i++) {
+      const id = (values[i][21] || '').toString().trim();
+      if (id.startsWith('OM')) {
+        const num = parseInt(id.slice(2));
+        if (!isNaN(num) && num > maxId) maxId = num;
+      }
+    }
+    const newId = 'OM' + String(maxId + 1).padStart(3, '0');
+
+    // Append new row
+    // Col A=Day, C=Name, E=Location, F=Frequency, G=Style, H=Equipment,
+    // I=StartTime, J=Notes, K=Contact, L=Email, M=Date, N=By, O=Instagram,
+    // P=BackingTracks, U=MapStatus, V=VenueID
+    const newRow = new Array(22).fill('');
+    newRow[0]  = data.day.toUpperCase();           // A: Day
+    newRow[2]  = data.name;                         // C: Name
+    newRow[4]  = data.location;                     // E: Location
+    newRow[5]  = data.frequency || '';              // F: Frequency
+    newRow[6]  = data.style || '';                  // G: Style
+    newRow[7]  = data.equipment || '';              // H: Set up
+    newRow[8]  = data.startTime;                    // I: Start time
+    newRow[9]  = data.notes || '';                  // J: Notes
+    newRow[10] = data.contact || '';                // K: Contact
+    newRow[11] = data.email || '';                  // L: Email
+    newRow[12] = new Date().toLocaleDateString('en-GB'); // M: Date
+    newRow[13] = data.submitterName ? data.submitterName + ' (' + data.submitterRole + ')' : 'Web submission'; // N: By
+    newRow[14] = data.instagram || '';              // O: Instagram
+    newRow[15] = data.backingTracks || '';          // P: Backing tracks
+    newRow[17] = 'Active';                          // R: Map Status
+    newRow[21] = newId;                             // V: Venue ID
+
+    // Insert into the correct day group rather than appending to the bottom
+    const allValues = sheet.getRange(1, 1, sheet.getLastRow(), 1).getValues();
+    let insertRow = sheet.getLastRow() + 1; // default: append at end
+
+    const targetDay = data.day.toUpperCase();
+    let inTargetDay = false;
+    let lastRowOfTargetDay = -1;
+
+    for (let i = 1; i < allValues.length; i++) {
+      const cellVal = (allValues[i][0] || '').toString().trim().toUpperCase();
+      if (cellVal === targetDay) {
+        inTargetDay = true;
+        lastRowOfTargetDay = i + 1; // 1-indexed
+      } else if (inTargetDay && cellVal !== '' && cellVal !== targetDay) {
+        // We've moved past the target day group
+        break;
+      }
+    }
+
+    if (lastRowOfTargetDay > 0) {
+      insertRow = lastRowOfTargetDay + 1;
+      sheet.insertRowAfter(lastRowOfTargetDay);
+    } else {
+      // Day group not found — just append
+      sheet.appendRow(newRow);
+      insertRow = -1; // signal we already appended
+    }
+
+    if (insertRow > 0) {
+      sheet.getRange(insertRow, 1, 1, newRow.length).setValues([newRow]);
+    }
+
+    // Email admin notification
+    const submitterLine = data.submitterName
+      ? `${data.submitterName} — ${data.submitterRole || 'role not specified'}`
+      : `Anonymous — ${data.submitterRole || 'role not specified'}`;
+
+    MailApp.sendEmail({
+      to: EMAIL_RECIPIENT_,
+      subject: `🎤 New venue submitted: ${data.name}`,
+      body: [
+        'A new open mic has been submitted via the website:',
+        '',
+        `Name: ${data.name}`,
+        `Location: ${data.location}`,
+        `Day: ${data.day}`,
+        `Time: ${data.startTime}`,
+        `Frequency: ${data.frequency || 'not specified'}`,
+        `Equipment: ${data.equipment || 'not specified'}`,
+        `Notes: ${data.notes || 'none'}`,
+        `Contact: ${data.contact || 'none'}`,
+        `Instagram: ${data.instagram || 'none'}`,
+        '',
+        `Submitted by: ${submitterLine}`,
+        '',
+        `View spreadsheet: https://tinyurl.com/OpenMicFamily`
+      ].join('\n')
+    });
+
+    Logger.log(`✅ New venue added: ${data.name} (${newId})`);
+    return jsonResponse_({ success: true, id: newId });
+
+  } catch(err) {
+    Logger.log(`❌ Submission error: ${err.message}`);
+    return jsonResponse_({ success: false, error: err.message });
+  }
+}
+
+function jsonResponse_(obj) {
+  return ContentService
+    .createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+// ─── VENUE HEALTH CHECK FORM ──────────────────────────────────────────────────
+/**
+ * Creates a Google Form with a dropdown of all active venues.
+ * Run this ONCE to create the form. Share the form URL with your group.
+ * Responses are collected in a linked spreadsheet.
+ */
+function createVenueHealthCheckForm() {
+  const venues = getActiveVenuesNoGeocode_().sort((a, b) => {
+    const stripThe = s => s.replace(/^the\s+/i, "").toLowerCase();
+    return stripThe(a.name).localeCompare(stripThe(b.name));
+  });
+
+  const form = FormApp.create("Open Mic Health Check");
+  form.setDescription(
+    "Help us keep the open mic list accurate! " +
+    "Let us know if a venue is still running, on hiatus, or has closed. " +
+    "Takes 30 seconds. Thank you! 🎤"
+  );
+
+  // Venue dropdown
+  const venueItem = form.addListItem();
+  venueItem.setTitle("Which open mic are you reporting on?")
+           .setRequired(true)
+           .setChoiceValues(venues.map(v => `${v.name} (${titleCase_(v.day)} · ${v.location})`));
+
+  // Status radio
+  const statusItem = form.addMultipleChoiceItem();
+  statusItem.setTitle("What is the current status of this open mic?")
+            .setRequired(true)
+            .setChoices([
+              statusItem.createChoice("✅ Still running as normal"),
+              statusItem.createChoice("⚠️ Running but details have changed"),
+              statusItem.createChoice("⏸️ Temporarily on hiatus"),
+              statusItem.createChoice("❌ Permanently closed"),
+            ]);
+
+  // Details text box
+  const detailsItem = form.addParagraphTextItem();
+  detailsItem.setTitle("Any additional details? (new time, new host, reason for closure etc.)")
+             .setRequired(false);
+
+  // Host or attendee
+  const roleItem = form.addMultipleChoiceItem();
+  roleItem.setTitle("What is your relationship to this open mic?")
+          .setRequired(true)
+          .setChoices([
+            roleItem.createChoice("🎤 I host this open mic"),
+            roleItem.createChoice("👤 I attend as a performer / audience"),
+            roleItem.createChoice("🔗 I heard about it secondhand"),
+          ]);
+
+  // Reporter name (optional)
+  const nameItem = form.addTextItem();
+  nameItem.setTitle("Your name (optional)")
+          .setRequired(false);
+
+  const formUrl = form.getPublishedUrl();
+  const editUrl = form.getEditUrl();
+
+  Logger.log(`✅ Form created!`);
+  Logger.log(`📋 Share this URL with your group: ${formUrl}`);
+  Logger.log(`✏️ Edit the form here: ${editUrl}`);
+
+  // Email yourself the links
+  MailApp.sendEmail({
+    to: EMAIL_RECIPIENT_,
+    subject: "✅ Venue Health Check Form Created",
+    body: `Your venue health check form is ready!
+
+Share this link with your WhatsApp group:
+${formUrl}
+
+Edit the form here:
+${editUrl}
+
+Tip: shorten the share link at tinyurl.com before posting to WhatsApp.`
+  });
+}
+
+/**
+ * Sends a weekly prompt to yourself with the health check form link.
+ * Paste the message into WhatsApp to crowdsource venue status updates.
+ * Set a weekly trigger via createWeeklyHealthCheckTrigger().
+ */
+function sendWeeklyHealthCheckPrompt() {
+  const props = PropertiesService.getScriptProperties();
+  const formUrl = props.getProperty("healthCheckFormUrl");
+
+  const msg = formUrl
+    ? `👋 Weekly open mic health check!
+
+Are all your local open mics still running? Please take 30 seconds to let us know:
+${formUrl}
+
+Your updates help keep our daily summary accurate for everyone 🎤`
+    : `⚠️ Health check form URL not set. Run createVenueHealthCheckForm() first and save the URL to script properties as "healthCheckFormUrl".`;
+
+  MailApp.sendEmail({
+    to: EMAIL_RECIPIENT_,
+    subject: "📋 Weekly Open Mic Health Check — paste into WhatsApp",
+    body: msg
+  });
+
+  Logger.log("✅ Weekly health check prompt sent.");
+}
+
+/**
+ * Run ONCE after createVenueHealthCheckForm() to:
+ * 1. Save the form URL to script properties
+ * 2. Set up a weekly Monday 9am trigger for the health check prompt
+ */
+function setupWeeklyHealthCheck(formUrl) {
+  // Save form URL
+  PropertiesService.getScriptProperties().setProperty("healthCheckFormUrl", formUrl);
+
+  // Remove existing trigger
+  ScriptApp.getProjectTriggers()
+    .filter(t => t.getHandlerFunction() === "sendWeeklyHealthCheckPrompt")
+    .forEach(t => ScriptApp.deleteTrigger(t));
+
+  // Weekly Monday 9am
+  ScriptApp.newTrigger("sendWeeklyHealthCheckPrompt")
+    .timeBased()
+    .onWeekDay(ScriptApp.WeekDay.MONDAY)
+    .atHour(9)
+    .inTimezone("Europe/London")
+    .create();
+
+  Logger.log("⏰ Weekly health check trigger set — every Monday at 9am.");
+}
+
+// ─── DIAGNOSTICS ──────────────────────────────────────────────────────────────
+// Run this first before deploying. Check the logs for any geocoding failures.
+
+function testDiagnostics() {
+  Logger.log("=== DIAGNOSTICS ===");
+  const venues = getActiveVenues_();
+  Logger.log(`Active venues: ${venues.length}`);
+
+  let ok = 0, fail = 0;
+  venues.forEach((v, i) => {
+    const coords = geocodeAddress_(v.location);
+    const timeStr = v.time || "(no time)";
+    if (coords) {
+      Logger.log(`✅ [${i+1}] ${v.day} | ${v.name} | ${v.location} | ${timeStr} → ${coords.lat.toFixed(4)},${coords.lng.toFixed(4)}`);
+      ok++;
+    } else {
+      Logger.log(`❌ [${i+1}] ${v.day} | ${v.name} | ${v.location} | ${timeStr} → GEOCODE FAILED`);
+      fail++;
+    }
+  });
+
+  Logger.log(`\n✅ Success: ${ok} | ❌ Failed: ${fail}`);
+  Logger.log("\n=== KML PREVIEW (first 3000 chars) ===");
+  Logger.log(generateKML_().substring(0, 3000));
+}
