@@ -554,6 +554,15 @@
     display: flex;
     gap: 8px;
     flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .venue-distance {
+    font-size: 0.78rem;
+    color: var(--accent);
+    font-weight: 500;
+    margin-left: auto;
+    flex-shrink: 0;
   }
 
   .venue-card-chevron {
@@ -731,6 +740,18 @@
       <span class="day-count" id="cnt-SUNDAY"></span>
     </div>
   </div>
+
+  <div class="drawer-title" style="padding: 16px 20px 12px; margin-top: 4px; border-top: 1px solid var(--border);">Filter by equipment</div>
+  <div class="equip-list" id="equipList">
+    <div class="equip-item" data-filter="backingTracks">
+      <div class="equip-check" id="chk-backingTracks"></div>
+      <span>🎵 Backing tracks allowed</span>
+    </div>
+    <div class="equip-item" data-filter="piano">
+      <div class="equip-check" id="chk-piano"></div>
+      <span>🎹 Piano / keyboard</span>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -782,7 +803,7 @@ function render() {
   markers=[];
   var q=filter.toLowerCase();
   var vis=venues.filter(function(v){
-    return (activeDay==='ALL'||v.day===activeDay) && (!q||v.name.toLowerCase().indexOf(q)!==-1||v.location.toLowerCase().indexOf(q)!==-1) && v.lat && v.lng;
+    return (activeDay==='ALL'||v.day===activeDay) && (!q||v.name.toLowerCase().indexOf(q)!==-1||v.location.toLowerCase().indexOf(q)!==-1) && v.lat && v.lng && matchesEquip(v);
   });
   for(var j=0;j<vis.length;j++){
     var v=vis[j];
@@ -947,6 +968,52 @@ document.getElementById('locBtn').addEventListener('click', function() {
 // ── LIST VIEW ──
 var currentView = 'map';
 var DAYS_ORDER = ['MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY','SUNDAY'];
+var equipFilters = { backingTracks: false, piano: false };
+
+// Equipment filter helpers
+function hasBacking(v) {
+  var val = (v.backingTracks || '').toLowerCase();
+  return val === 'yes' || val === 'possible';
+}
+
+function hasPiano(v) {
+  var setup = (v.equipment || '').toLowerCase();
+  return setup.indexOf('piano') !== -1 || setup.indexOf('keyboard') !== -1 || setup.indexOf('keys') !== -1;
+}
+
+function matchesEquip(v) {
+  if (equipFilters.backingTracks && !hasBacking(v)) return false;
+  if (equipFilters.piano && !hasPiano(v)) return false;
+  return true;
+}
+
+// Wire equipment filter clicks
+document.getElementById('equipList').addEventListener('click', function(e) {
+  var item = e.target.closest('.equip-item');
+  if (!item) return;
+  var key = item.dataset.filter;
+  equipFilters[key] = !equipFilters[key];
+  item.classList.toggle('active', equipFilters[key]);
+  render();
+  if (currentView === 'list') renderList();
+});
+
+// Distance helpers
+function calcDistance(lat1, lng1, lat2, lng2) {
+  var R = 3958.8; // miles
+  var dLat = (lat2 - lat1) * Math.PI / 180;
+  var dLng = (lng2 - lng1) * Math.PI / 180;
+  var a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLng/2) * Math.sin(dLng/2);
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+function formatDist(miles) {
+  if (miles < 0.1) return 'nearby';
+  if (miles < 10) return miles.toFixed(1) + ' mi';
+  return Math.round(miles) + ' mi';
+}
 
 var mapViewBtn = document.getElementById('mapViewBtn');
 var listViewBtn = document.getElementById('listViewBtn');
@@ -982,7 +1049,7 @@ function renderList() {
   var filtered = venues.filter(function(v) {
     var dayMatch = activeDay === 'ALL' || v.day === activeDay;
     var nameMatch = !q || v.name.toLowerCase().indexOf(q) !== -1 || v.location.toLowerCase().indexOf(q) !== -1;
-    return dayMatch && nameMatch;
+    return dayMatch && nameMatch && matchesEquip(v);
   });
 
   if (!filtered.length) {
@@ -1011,6 +1078,11 @@ function renderList() {
       var meta = '';
       if (v.time) meta += '<span>🕐 ' + v.time + '</span>';
       meta += '<span>📍 ' + v.location + '</span>';
+      var distStr = '';
+      if (lastLat && v.lat && v.lng) {
+        var d = calcDistance(lastLat, lastLng, v.lat, v.lng);
+        distStr = '<span class="venue-distance">' + formatDist(d) + '</span>';
+      }
 
       var bodyRows = '';
       if (v.frequency) bodyRows += '<div class="venue-card-row"><span class="venue-card-icon">🔁</span><span>' + v.frequency + '</span></div>';
@@ -1027,7 +1099,7 @@ function renderList() {
           '<div class="venue-card-dot" style="background:' + colour + '"></div>' +
           '<div class="venue-card-main">' +
             '<div class="venue-card-name">' + v.name + '</div>' +
-            '<div class="venue-card-meta">' + meta + '</div>' +
+            '<div class="venue-card-meta">' + meta + distStr + '</div>' +
           '</div>' +
           '<div class="venue-card-chevron">▼</div>' +
         '</div>' +
