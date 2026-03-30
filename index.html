@@ -1449,7 +1449,7 @@ document.getElementById('editSaveBtn').addEventListener('click', function() {
 
 // ── LOAD ──
 var xhr = new XMLHttpRequest();
-xhr.open('GET', 'https://script.google.com/macros/s/AKfycbxR-T9OXmnkuikldlz_2VwZZHhDiKV8sCtJY7-pHjxPDYNAzsL078cUoKCszmaGRs1dTQ/exec?format=json');
+xhr.open('GET', 'https://script.google.com/macros/s/AKfycbxR-T9OXmnkuikldlz_2VwZZHhDiKV8sCtJY7-pHjxPDYNAzsL078cUoKCszmaGRs1dTQ/exec?format=json&t=' + Date.now() + '');
 xhr.onload = function() {
   if (xhr.status === 200) {
     try {
