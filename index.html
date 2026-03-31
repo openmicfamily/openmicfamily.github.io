@@ -840,6 +840,30 @@
     padding: 8px 20px 16px;
     color: var(--muted);
   }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed;
+    top: 112px;
+    right: 14px;
+    background: var(--surface);
+    border: 1.5px solid var(--accent);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 500;
+    padding: 8px 14px;
+    border-radius: 10px;
+    z-index: 2000;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+    opacity: 0;
+    transform: translateY(-6px);
+    transition: opacity 0.25s, transform 0.25s;
+    pointer-events: none;
+    max-width: 200px;
+    text-align: right;
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
 </style>
 </head>
 <body>
@@ -916,6 +940,8 @@
   </svg>
 </button>
 </div>
+
+<div class="toast" id="filterToast"></div>
 
 <!-- Filter drawer -->
 <div class="drawer-backdrop" id="backdrop"></div>
@@ -1049,7 +1075,7 @@ function popup(v) {
     r+='<div class="p-row"><span class="p-icon">📏</span><span style="color:#999">'+formatDist(dist)+' from you</span></div>';
   }
   var staleWarning = v.stale ? '<div style="background:#fff3cd;color:#856404;padding:8px 18px;font-size:0.8rem;">⚠️ Not confirmed in 50+ days — may no longer be running</div>' : '';
-  return '<div class="p-header"><div class="p-badge" style="background:'+c+'">'+tc(v.day)+'</div><div class="p-name">'+v.name+'</div></div><div class="p-body">'+r+'</div><a class="p-maps" href="'+u+'" target="_blank">Open in Google Maps &rarr;</a>'+'<span class="venue-id-store" style="display:none">'+(v.venueId||'')+'</span>'+'<div style="text-align:center;padding:4px 0 10px"><a href="mailto:usman.imtiazi@gmail.com?subject=Error: '+encodeURIComponent(v.name)+'&body=Venue: '+encodeURIComponent(v.name)+'%0AIssue: " style="font-size:0.75rem;color:#999;text-decoration:none;">⚑ Report an error</a></div>';
+  return '<div class="p-header"><div class="p-badge" style="background:'+c+'">'+tc(v.day)+'</div><div class="p-name">'+v.name+'</div></div><div class="p-body">'+r+'</div><a class="p-maps" href="'+u+'" target="_blank"><svg width=\"16\" height=\"20\" viewBox=\"0 0 16 20\" style=\"margin-right:6px;flex-shrink:0\" fill=\"none\"><path d=\"M8 0C3.58 0 0 3.58 0 8c0 5.25 8 12 8 12S16 13.25 16 8c0-4.42-3.58-8-8-8z\" fill=\"#E8431B\"/><circle cx=\"8\" cy=\"8\" r=\"3.2\" fill=\"white\"/></svg>Open in Google Maps</a>'+'<span class="venue-id-store" style="display:none">'+(v.venueId||'')+'</span>'+'<div style="text-align:center;padding:4px 0 10px"><a href="mailto:usman.imtiazi@gmail.com?subject=Error: '+encodeURIComponent(v.name)+'&body=Venue: '+encodeURIComponent(v.name)+'%0AIssue: " style="font-size:0.75rem;color:#999;text-decoration:none;">⚑ Report an error</a></div>';
 }
 
 function render() {
@@ -1494,6 +1520,14 @@ document.getElementById('editSaveBtn').addEventListener('click', function() {
   xhr.send();
 });
 
+// ── TOAST ──
+function showToast(msg) {
+  var el = document.getElementById('filterToast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(function() { el.classList.remove('show'); }, 4500);
+}
+
 // ── QUERY PARAMS ──
 function applyQueryParams() {
   var params = new URLSearchParams(window.location.search);
@@ -1510,7 +1544,12 @@ function applyQueryParams() {
       var badge = document.getElementById('dayBadge');
       var dayShorts = {MONDAY:'Mo',TUESDAY:'Tu',WEDNESDAY:'We',THURSDAY:'Th',FRIDAY:'Fr',SATURDAY:'Sa',SUNDAY:'Su'};
       if (dayUpper === 'ALL') { badge.style.display = 'none'; }
-      else { badge.style.display = 'flex'; badge.textContent = dayShorts[dayUpper] || dayUpper.slice(0,2); }
+      else {
+        badge.style.display = 'flex';
+        badge.textContent = dayShorts[dayUpper] || dayUpper.slice(0,2);
+        var label = dayUpper.charAt(0) + dayUpper.slice(1).toLowerCase();
+        setTimeout(function() { showToast('Filtered to ' + label + ' ↑'); }, 600);
+      }
     }
   }
 
@@ -1573,7 +1612,7 @@ xhr.onload = function() {
       clearInterval(si);
       locate(true);
 
-      // Apply URL query params after load
+          // Apply URL query params after load
       applyQueryParams();
     } catch(e) {
       document.getElementById('loading').innerHTML = '<h2>Error</h2><p>' + e.message + '</p>';
