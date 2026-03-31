@@ -45,7 +45,7 @@
   /* ── HEADER ── */
   header {
     height: 48px;
-    padding: 0 14px;
+    padding: 0 12px;
     background: var(--surface);
     border-bottom: 1px solid var(--border);
     display: flex;
@@ -402,8 +402,13 @@
   /* ── ZOOM CONTROLS ── */
   .leaflet-control-zoom {
     border: none !important;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.3) !important;
+    box-shadow: none !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 4px !important;
   }
+  .leaflet-touch .leaflet-control-zoom-in,
+  .leaflet-touch .leaflet-control-zoom-out,
   .leaflet-control-zoom-in,
   .leaflet-control-zoom-out {
     width: 40px !important;
@@ -412,16 +417,16 @@
     background: #fff !important;
     color: #333 !important;
     border: none !important;
-    font-size: 1.2rem !important;
+    border-radius: 50% !important;
+    font-size: 1.3rem !important;
     font-weight: 400 !important;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.3) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
   }
-  .leaflet-control-zoom-in {
-    border-radius: 50% 50% 0 0 !important;
-    margin-bottom: 2px !important;
-  }
-  .leaflet-control-zoom-out {
-    border-radius: 0 0 50% 50% !important;
-  }
+  .leaflet-touch .leaflet-control-zoom-in:hover,
+  .leaflet-touch .leaflet-control-zoom-out:hover,
   .leaflet-control-zoom-in:hover,
   .leaflet-control-zoom-out:hover {
     background: #f0f0f0 !important;
