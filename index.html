@@ -441,7 +441,7 @@
     background: var(--accent);
     color: #000;
     border-radius: 8px;
-    padding: 0 12px;
+    padding: 0 14px;
     font-family: 'DM Sans', sans-serif;
     font-size: 0.82rem;
     font-weight: 600;
@@ -450,6 +450,7 @@
     display: flex;
     align-items: center;
     height: 40px;
+    align-self: center;
     flex-shrink: 0;
   }
 
@@ -1454,8 +1455,7 @@ xhr.onload = function() {
   if (xhr.status === 200) {
     try {
       venues = JSON.parse(xhr.responseText);
-      // Log first venue to check venueId
-      if (venues.length) console.log('First venue venueId:', venues[0].venueId, venues[0].name);
+
       render();
       document.getElementById('loading').style.display = 'none';
       clearInterval(si);
