@@ -1093,13 +1093,21 @@ function linkify(val, type) {
   return val;
 }
 
+function linkifyText(text) {
+  if (!text) return text;
+  // Replace URLs with clickable links
+  return text.replace(/(https?:\/\/[^\s]+)/g, function(url) {
+    return '<a href="' + url + '" target="_blank" style="color:inherit">' + url + '</a>';
+  });
+}
+
 function popup(v) {
   var c=COLOURS[v.day]||'#888', u='https://maps.google.com/?q='+encodeURIComponent(v.name+', '+v.location), r='';
   if(v.time)      r+='<div class="p-row"><span class="p-icon">🕐</span><span>'+v.time+'</span></div>';
   if(v.frequency) r+='<div class="p-row"><span class="p-icon">🔁</span><span>'+v.frequency+'</span></div>';
   if(v.style)     r+='<div class="p-row"><span class="p-icon">🎵</span><span>'+v.style+'</span></div>';
   if(v.equipment) r+='<div class="p-row"><span class="p-icon">🎸</span><span>'+v.equipment+'</span></div>';
-  if(v.notes)     r+='<div class="p-row"><span class="p-icon">📝</span><span>'+v.notes+'</span></div>';
+  if(v.notes)     r+='<div class="p-row"><span class="p-icon">📝</span><span>'+linkifyText(v.notes)+'</span></div>';
   if(v.contact)   r+='<div class="p-row"><span class="p-icon">📞</span><span>'+linkify(v.contact,'contact')+'</span></div>';
   if(v.instagram) r+='<div class="p-row"><span class="p-icon">📷</span><span>'+linkify(v.instagram,'instagram')+'</span></div>';
   r+='<div class="p-row"><span class="p-icon">📍</span><span>'+v.location+'</span></div>';
@@ -1424,7 +1432,7 @@ function renderList() {
       if (v.frequency) bodyRows += '<div class="venue-card-row"><span class="venue-card-icon">🔁</span><span>' + v.frequency + '</span></div>';
       if (v.style)     bodyRows += '<div class="venue-card-row"><span class="venue-card-icon">🎵</span><span>' + v.style + '</span></div>';
       if (v.equipment) bodyRows += '<div class="venue-card-row"><span class="venue-card-icon">🎸</span><span>' + v.equipment + '</span></div>';
-      if (v.notes)     bodyRows += '<div class="venue-card-row"><span class="venue-card-icon">📝</span><span style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">' + v.notes + '</span></div>';
+      if (v.notes)     bodyRows += '<div class="venue-card-row"><span class="venue-card-icon">📝</span><span style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">' + linkifyText(v.notes) + '</span></div>';
       if (v.contact)   bodyRows += '<div class="venue-card-row"><span class="venue-card-icon">📞</span><span>' + linkify(v.contact,'contact') + '</span></div>';
       if (v.instagram) bodyRows += '<div class="venue-card-row"><span class="venue-card-icon">📷</span><span>' + linkify(v.instagram,'instagram') + '</span></div>';
       if (v.backingTracks) bodyRows += '<div class="venue-card-row"><span class="venue-card-icon">🎶</span><span>Backing tracks: ' + v.backingTracks + '</span></div>';
