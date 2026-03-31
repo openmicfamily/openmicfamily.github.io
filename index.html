@@ -514,7 +514,7 @@
   }
 
   .venue-card {
-    margin: 0 12px 8px;
+    margin: 0 10px 6px;
     background: var(--surface);
     border-radius: 14px;
     border: 1px solid var(--border);
@@ -526,10 +526,10 @@
   .venue-card:active { border-color: var(--accent); }
 
   .venue-card-header {
-    padding: 14px 16px;
+    padding: 10px 14px;
     display: flex;
     align-items: flex-start;
-    gap: 12px;
+    gap: 10px;
   }
 
   .venue-card-dot {
@@ -542,22 +542,22 @@
   .venue-card-main { flex: 1; min-width: 0; }
 
   .venue-card-name {
-    font-size: 1rem;
+    font-size: 0.9rem;
     font-weight: 600;
     color: var(--text);
-    margin-bottom: 4px;
+    margin-bottom: 2px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
 
   .venue-card-meta {
-    font-size: 0.82rem;
+    font-size: 0.78rem;
     color: var(--muted);
     display: grid;
     grid-template-columns: 1fr auto;
     align-items: start;
-    gap: 4px 8px;
+    gap: 2px 8px;
   }
 
   .venue-card-meta-left {
@@ -596,7 +596,7 @@
 
   .venue-card-body {
     display: none;
-    padding: 0 16px 14px 40px;
+    padding: 0 12px 10px 36px;
     border-top: 1px solid var(--border);
   }
 
@@ -604,12 +604,12 @@
 
   .venue-card-row {
     display: flex;
-    gap: 8px;
+    gap: 6px;
     align-items: flex-start;
-    font-size: 0.85rem;
-    line-height: 1.5;
+    font-size: 0.78rem;
+    line-height: 1.4;
     color: var(--text);
-    padding: 5px 0;
+    padding: 4px 0;
     border-bottom: 1px solid var(--border);
   }
 
@@ -619,13 +619,13 @@
 
   .venue-maps-btn {
     display: block;
-    margin-top: 12px;
-    padding: 11px;
+    margin-top: 8px;
+    padding: 9px;
     background: var(--accent);
     color: #000;
     text-align: center;
-    border-radius: 10px;
-    font-size: 0.88rem;
+    border-radius: 8px;
+    font-size: 0.8rem;
     font-weight: 600;
     text-decoration: none;
   }
@@ -1359,7 +1359,7 @@ function renderList() {
       if (v.frequency) bodyRows += '<div class="venue-card-row"><span class="venue-card-icon">🔁</span><span>' + v.frequency + '</span></div>';
       if (v.style)     bodyRows += '<div class="venue-card-row"><span class="venue-card-icon">🎵</span><span>' + v.style + '</span></div>';
       if (v.equipment) bodyRows += '<div class="venue-card-row"><span class="venue-card-icon">🎸</span><span>' + v.equipment + '</span></div>';
-      if (v.notes)     bodyRows += '<div class="venue-card-row"><span class="venue-card-icon">📝</span><span>' + v.notes + '</span></div>';
+      if (v.notes)     bodyRows += '<div class="venue-card-row"><span class="venue-card-icon">📝</span><span style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">' + v.notes + '</span></div>';
       if (v.contact)   bodyRows += '<div class="venue-card-row"><span class="venue-card-icon">📞</span><span>' + v.contact + '</span></div>';
       if (v.instagram) bodyRows += '<div class="venue-card-row"><span class="venue-card-icon">📷</span><span>' + v.instagram + '</span></div>';
       if (v.backingTracks) bodyRows += '<div class="venue-card-row"><span class="venue-card-icon">🎶</span><span>Backing tracks: ' + v.backingTracks + '</span></div>';
