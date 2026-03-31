@@ -447,7 +447,7 @@
     color: var(--accent);
     border: 1.5px solid var(--accent);
     border-radius: 8px;
-    padding: 0 14px;
+    padding: 0 12px;
     font-family: 'DM Sans', sans-serif;
     font-size: 0.82rem;
     font-weight: 600;
@@ -459,7 +459,7 @@
     align-self: center;
     flex-shrink: 0;
     margin-left: auto;
-    margin-right: 8px;
+    margin-right: 6px;
   }
 
   .view-toggle {
@@ -1021,7 +1021,7 @@
     </div>
     <div class="equip-item" data-filter="piano">
       <div class="equip-check" id="chk-piano"></div>
-      <span>🎹 Piano/keyboard</span>
+      <span>🎹 Piano / keyboard</span>
     </div>
   </div>
 </div>
@@ -1291,13 +1291,28 @@ document.getElementById('darkMapBtn').addEventListener('click', function() {
   tileLayer = L.tileLayer(isDarkMap ? TILES_DARK : TILES_LIGHT, { attribution:'&copy; OSM &copy; CartoDB', maxZoom:19 });
   tileLayer.addTo(map);
   this.textContent = isDarkMap ? '☀️' : '🌙';
-  this.style.background = isDarkMap ? '#1a1a1a' : '#fff';
-  // Update tooltip colours for readability
+  this.style.background = isDarkMap ? '#2a2a2a' : '#fff';
+  this.style.color = isDarkMap ? '#f0ece4' : '#333';
+
+  // Muted pin colours for dark map
+  var COLOURS_DARK = { MONDAY:'#c44a4a', TUESDAY:'#c4612e', WEDNESDAY:'#b09838', THURSDAY:'#3d8a58', FRIDAY:'#3570ab', SATURDAY:'#5e4faa', SUNDAY:'#a04590' };
+  var COLOURS_LIGHT = { MONDAY:'#e05c5c', TUESDAY:'#e07a3a', WEDNESDAY:'#d4b84a', THURSDAY:'#5aaa6e', FRIDAY:'#4a8fd4', SATURDAY:'#7b64d4', SUNDAY:'#c45aaa' };
+  if (isDarkMap) { for (var k in COLOURS_DARK) COLOURS[k] = COLOURS_DARK[k]; }
+  else { for (var k in COLOURS_LIGHT) COLOURS[k] = COLOURS_LIGHT[k]; }
+  render();
+
+  // Update tooltip colours
   var tips = document.querySelectorAll('.v-tip');
   for (var i = 0; i < tips.length; i++) {
-    tips[i].style.background = isDarkMap ? 'rgba(240,236,228,0.85)' : 'rgba(20,20,20,0.72)';
+    tips[i].style.background = isDarkMap ? 'rgba(240,236,228,0.88)' : 'rgba(20,20,20,0.72)';
     tips[i].style.color = isDarkMap ? '#111' : '#f0ece4';
   }
+
+  // Update location button
+  var locBtn = document.getElementById('locBtn');
+  locBtn.style.background = isDarkMap ? '#2a2a2a' : '#fff';
+  var locSvg = locBtn.querySelector('svg');
+  if (locSvg) locSvg.setAttribute('stroke', isDarkMap ? '#e8e8e8' : '#333');
 });
 
 // ── LOCATION ──
