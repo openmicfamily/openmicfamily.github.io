@@ -1494,6 +1494,72 @@ document.getElementById('editSaveBtn').addEventListener('click', function() {
   xhr.send();
 });
 
+// ── QUERY PARAMS ──
+function applyQueryParams() {
+  var params = new URLSearchParams(window.location.search);
+
+  // ?day=thursday
+  var day = params.get('day');
+  if (day) {
+    var dayUpper = day.toUpperCase();
+    if (dayUpper === 'ALL' || ['MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY','SUNDAY'].indexOf(dayUpper) !== -1) {
+      activeDay = dayUpper;
+      document.querySelectorAll('.day-item').forEach(function(el) { el.classList.remove('active'); });
+      var target = document.querySelector('.day-item[data-day="' + dayUpper + '"]');
+      if (target) target.classList.add('active');
+      var badge = document.getElementById('dayBadge');
+      var dayShorts = {MONDAY:'Mo',TUESDAY:'Tu',WEDNESDAY:'We',THURSDAY:'Th',FRIDAY:'Fr',SATURDAY:'Sa',SUNDAY:'Su'};
+      if (dayUpper === 'ALL') { badge.style.display = 'none'; }
+      else { badge.style.display = 'flex'; badge.textContent = dayShorts[dayUpper] || dayUpper.slice(0,2); }
+    }
+  }
+
+  // ?equipment=piano or ?equipment=backingtracks
+  var equip = params.get('equipment');
+  if (equip) {
+    equip.toLowerCase().split(',').forEach(function(e) {
+      e = e.trim();
+      if (e === 'piano' || e === 'keyboard') {
+        equipFilters.piano = true;
+        var el = document.querySelector('.equip-item[data-filter="piano"]');
+        if (el) el.classList.add('active');
+      }
+      if (e === 'backingtracks' || e === 'backing') {
+        equipFilters.backingTracks = true;
+        var el = document.querySelector('.equip-item[data-filter="backingTracks"]');
+        if (el) el.classList.add('active');
+      }
+    });
+  }
+
+  // ?venue=OM001 — zoom to specific venue and open popup
+  var venueId = params.get('venue');
+  if (venueId) {
+    setTimeout(function() {
+      for (var i = 0; i < venues.length; i++) {
+        if (venues[i].venueId === venueId.toUpperCase() && venues[i].lat && venues[i].lng) {
+          map.setView([venues[i].lat, venues[i].lng], 16);
+          for (var j = 0; j < markers.length; j++) {
+            var ll = markers[j].getLatLng();
+            if (Math.abs(ll.lat - venues[i].lat) < 0.0001 && Math.abs(ll.lng - venues[i].lng) < 0.0001) {
+              markers[j].openPopup();
+              break;
+            }
+          }
+          break;
+        }
+      }
+    }, 500);
+  }
+
+  // ?view=list
+  var view = params.get('view');
+  if (view === 'list') setView('list');
+
+  render();
+  if (currentView === 'list') renderList();
+}
+
 // ── LOAD ──
 var xhr = new XMLHttpRequest();
 xhr.open('GET', 'https://script.google.com/macros/s/AKfycbxR-T9OXmnkuikldlz_2VwZZHhDiKV8sCtJY7-pHjxPDYNAzsL078cUoKCszmaGRs1dTQ/exec?format=json&t=' + Date.now() + '');
@@ -1506,6 +1572,9 @@ xhr.onload = function() {
       document.getElementById('loading').style.display = 'none';
       clearInterval(si);
       locate(true);
+
+      // Apply URL query params after load
+      applyQueryParams();
     } catch(e) {
       document.getElementById('loading').innerHTML = '<h2>Error</h2><p>' + e.message + '</p>';
     }
