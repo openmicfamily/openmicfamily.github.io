@@ -402,35 +402,17 @@
   /* ── ZOOM CONTROLS ── */
   .leaflet-control-zoom {
     border: none !important;
-    box-shadow: none !important;
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 4px !important;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.3) !important;
   }
-  .leaflet-touch .leaflet-control-zoom-in,
-  .leaflet-touch .leaflet-control-zoom-out,
-  .leaflet-control-zoom-in,
-  .leaflet-control-zoom-out {
-    width: 40px !important;
-    height: 40px !important;
-    line-height: 40px !important;
+  .leaflet-touch .leaflet-bar a,
+  .leaflet-bar a {
     background: #fff !important;
     color: #333 !important;
-    border: none !important;
-    border-radius: 50% !important;
-    font-size: 1.3rem !important;
-    font-weight: 400 !important;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.3) !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
+    border-bottom: 1px solid #ccc !important;
   }
-  .leaflet-touch .leaflet-control-zoom-in:hover,
-  .leaflet-touch .leaflet-control-zoom-out:hover,
-  .leaflet-control-zoom-in:hover,
-  .leaflet-control-zoom-out:hover {
+  .leaflet-touch .leaflet-bar a:hover,
+  .leaflet-bar a:hover {
     background: #f0f0f0 !important;
-    color: #111 !important;
   }
 
   /* ── LOCATION ── */
@@ -1353,9 +1335,11 @@ document.getElementById('darkMapBtn').addEventListener('click', function() {
   // Update zoom buttons
   var zoomBg = isDarkMap ? '#2a2a2a' : '#fff';
   var zoomCol = isDarkMap ? '#e8e8e8' : '#333';
-  document.querySelectorAll('.leaflet-control-zoom-in, .leaflet-control-zoom-out').forEach(function(el) {
-    el.style.background = zoomBg;
-    el.style.color = zoomCol;
+  var zoomBorder = isDarkMap ? '#444' : '#ccc';
+  document.querySelectorAll('.leaflet-bar a').forEach(function(el) {
+    el.style.setProperty('background', zoomBg, 'important');
+    el.style.setProperty('color', zoomCol, 'important');
+    el.style.setProperty('border-bottom-color', zoomBorder, 'important');
   });
 });
 
