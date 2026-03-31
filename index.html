@@ -458,6 +458,8 @@
     height: 40px;
     align-self: center;
     flex-shrink: 0;
+    margin-left: auto;
+    margin-right: 8px;
   }
 
   .view-toggle {
@@ -881,7 +883,7 @@
   <header>
     <h1>London <em>Open Mics</em></h1>
 
-    <a href="/add" class="add-venue-btn" style="margin-right:4px;">+ Add</a>
+    <a href="/add" class="add-venue-btn" id="addVenueBtn">+ Add</a>
   <button class="hdr-btn" id="filterBtn">
       <div class="filter-icon-wrap">
         <svg class="icon-funnel" width="18" height="16" viewBox="0 0 18 16" fill="currentColor">
@@ -919,6 +921,24 @@
 
   <div id="map"></div>
 <div id="listView"></div>
+<button id="darkMapBtn" title="Toggle dark map" style="
+  position:fixed;
+  bottom:90px;
+  right:16px;
+  width:40px;
+  height:40px;
+  border-radius:50%;
+  background:#fff;
+  border:none;
+  box-shadow:0 2px 12px rgba(0,0,0,0.3);
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:500;
+  font-size:1.1rem;
+  -webkit-tap-highlight-color:transparent;
+">🌙</button>
 <button id="locBtn" title="Go to my location" style="
   position:fixed;
   bottom:32px;
@@ -1038,7 +1058,7 @@ var DAYS = ['MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY','SUNDA
 
 var map = L.map('map', { center:[51.505,-0.12], zoom:11, zoomControl:false });
 L.control.zoom({ position:'bottomleft' }).addTo(map);
-L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { attribution:'&copy; OSM &copy; CartoDB', maxZoom:19 }).addTo(map);
+// tile layer added below
 
 // Tooltip→marker wiring done per-marker in render()
 
@@ -1257,6 +1277,28 @@ searchInput.addEventListener('input',function(){
 
 searchX.addEventListener('click',function(){ searchInput.value=''; filter=''; searchX.style.display='none'; searchResults.style.display='none'; render(); if(currentView==="list") renderList(); });
 document.addEventListener('click',function(e){ if(!searchInput.contains(e.target)&&!searchResults.contains(e.target)) searchResults.style.display='none'; });
+
+// ── MAP TILE TOGGLE ──
+var TILES_LIGHT = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+var TILES_DARK  = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+var isDarkMap = false;
+var tileLayer = L.tileLayer(TILES_LIGHT, { attribution:'&copy; OSM &copy; CartoDB', maxZoom:19 });
+tileLayer.addTo(map);
+
+document.getElementById('darkMapBtn').addEventListener('click', function() {
+  isDarkMap = !isDarkMap;
+  map.removeLayer(tileLayer);
+  tileLayer = L.tileLayer(isDarkMap ? TILES_DARK : TILES_LIGHT, { attribution:'&copy; OSM &copy; CartoDB', maxZoom:19 });
+  tileLayer.addTo(map);
+  this.textContent = isDarkMap ? '☀️' : '🌙';
+  this.style.background = isDarkMap ? '#1a1a1a' : '#fff';
+  // Update tooltip colours for readability
+  var tips = document.querySelectorAll('.v-tip');
+  for (var i = 0; i < tips.length; i++) {
+    tips[i].style.background = isDarkMap ? 'rgba(240,236,228,0.85)' : 'rgba(20,20,20,0.72)';
+    tips[i].style.color = isDarkMap ? '#111' : '#f0ece4';
+  }
+});
 
 // ── LOCATION ──
 var lastLat = null, lastLng = null;
