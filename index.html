@@ -1341,7 +1341,7 @@ function renderList() {
     if (!byDay[d].length) return;
     var colour = COLOURS[d] || '#888';
     var label = d.charAt(0) + d.slice(1).toLowerCase();
-    html += '<div class="list-day-header" onclick="toggleDayGroup(this)"><div class="list-day-dot" style="background:' + colour + '"></div>' + label + '<span class="list-day-chevron">▼</span></div>';
+    html += '<div class="list-day-header" onclick="toggleDayGroup(this)"><div class="list-day-dot" style="background:' + colour + '"></div><span style="min-width:100px;display:inline-block">' + label + '</span><span class="list-day-chevron">▼</span></div>';
     html += '<div class="list-day-venues">';
     byDay[d].forEach(function(v) {
       var mapsUrl = 'https://maps.google.com/?q=' + encodeURIComponent(v.name + ', ' + v.location);
