@@ -636,6 +636,34 @@
     font-size: 0.95rem;
   }
 
+  .list-day-header {
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  .list-day-header:active { opacity: 0.7; }
+
+  .list-day-chevron {
+    margin-left: auto;
+    font-size: 0.7rem;
+    color: var(--muted);
+    transition: transform 0.2s;
+    flex-shrink: 0;
+  }
+
+  .list-day-header.collapsed .list-day-chevron {
+    transform: rotate(-90deg);
+  }
+
+  .list-day-venues {
+    transition: none;
+  }
+
+  .list-day-venues.collapsed {
+    display: none;
+  }
+
   .equip-list {
     padding: 0 16px 24px;
     display: flex;
@@ -1313,7 +1341,8 @@ function renderList() {
     if (!byDay[d].length) return;
     var colour = COLOURS[d] || '#888';
     var label = d.charAt(0) + d.slice(1).toLowerCase();
-    html += '<div class="list-day-header"><div class="list-day-dot" style="background:' + colour + '"></div>' + label + '</div>';
+    html += '<div class="list-day-header" onclick="toggleDayGroup(this)"><div class="list-day-dot" style="background:' + colour + '"></div>' + label + '<span class="list-day-chevron">▼</span></div>';
+    html += '<div class="list-day-venues">';
     byDay[d].forEach(function(v) {
       var mapsUrl = 'https://maps.google.com/?q=' + encodeURIComponent(v.name + ', ' + v.location);
       var timeStr = v.time ? '<span>🕐 ' + v.time + '</span>' : '';
@@ -1350,6 +1379,7 @@ function renderList() {
         '</div>' +
       '</div>';
     });
+    html += '</div>'; // close list-day-venues
   });
 
   listEl.innerHTML = html;
@@ -1357,6 +1387,14 @@ function renderList() {
 
 function toggleCard(card) {
   card.classList.toggle('open');
+}
+
+function toggleDayGroup(header) {
+  header.classList.toggle('collapsed');
+  var venues = header.nextElementSibling;
+  if (venues && venues.classList.contains('list-day-venues')) {
+    venues.classList.toggle('collapsed');
+  }
 }
 
 // ── ADMIN MODE ──
