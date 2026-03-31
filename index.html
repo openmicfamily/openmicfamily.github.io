@@ -976,7 +976,8 @@
 var COLOURS = { MONDAY:'#e05c5c', TUESDAY:'#e07a3a', WEDNESDAY:'#d4b84a', THURSDAY:'#5aaa6e', FRIDAY:'#4a8fd4', SATURDAY:'#7b64d4', SUNDAY:'#c45aaa' };
 var DAYS = ['MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY','SUNDAY'];
 
-var map = L.map('map', { center:[51.505,-0.12], zoom:11 });
+var map = L.map('map', { center:[51.505,-0.12], zoom:11, zoomControl:false });
+L.control.zoom({ position:'bottomleft' }).addTo(map);
 L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { attribution:'&copy; OSM &copy; CartoDB', maxZoom:19 }).addTo(map);
 
 // Tooltip→marker wiring done per-marker in render()
@@ -1026,7 +1027,7 @@ function render() {
   for(var j=0;j<vis.length;j++){
     var v=vis[j];
     var m=L.marker([v.lat,v.lng],{icon:icon(v.day,v.stale)})
-      .bindPopup(popup(v),{maxWidth:300})
+      .bindPopup(popup(v),{maxWidth:300, autoPanPaddingTopLeft:[10,110], autoPanPaddingBottomRight:[10,20]})
       .bindTooltip(v.name,{permanent:true,direction:'top',offset:[0,-28],opacity:1,className:'v-tip v-tip-hide'})
       .addTo(map);
     // Wire tooltip click directly to this specific marker
