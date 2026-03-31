@@ -1005,7 +1005,7 @@ function tc(s){ return s ? s[0].toUpperCase()+s.slice(1).toLowerCase() : ''; }
 
 function popup(v) {
   var c=COLOURS[v.day]||'#888', u='https://maps.google.com/?q='+encodeURIComponent(v.name+', '+v.location), r='';
-  if(v.time)      r+='<div class="p-row"><span class="p-icon">⏰</span><span>'+v.time+'</span></div>';
+  if(v.time)      r+='<div class="p-row"><span class="p-icon">🕐</span><span>'+v.time+'</span></div>';
   if(v.frequency) r+='<div class="p-row"><span class="p-icon">🔁</span><span>'+v.frequency+'</span></div>';
   if(v.style)     r+='<div class="p-row"><span class="p-icon">🎵</span><span>'+v.style+'</span></div>';
   if(v.equipment) r+='<div class="p-row"><span class="p-icon">🎸</span><span>'+v.equipment+'</span></div>';
