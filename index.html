@@ -231,6 +231,21 @@
     to { opacity: 1; }
   }
 
+  /* ── PIN DROP ANIMATION ── */
+  /* Simple drop animation - visual feedback that page loaded */
+  .m-pin {
+    animation: pinDrop 0.4s ease-out both;
+  }
+
+  @keyframes pinDrop {
+    0% {
+      transform: translateY(-30px);
+    }
+    100% {
+      transform: translateY(0);
+    }
+  }
+
   /* ── FILTER DRAWER (bottom sheet) ── */
   .drawer-backdrop {
     position: fixed;
@@ -409,6 +424,7 @@
     backdrop-filter: blur(8px);
     padding: 32px 48px;
     border-radius: 16px;
+    opacity: 0;
   }
 
   #loading.fade-out {
@@ -439,9 +455,9 @@
 
   /* Mobile adjustments for loading card */
   @media (max-width: 768px) {
-    #loading h2 { font-size: 1.5rem; }
-    #loading p { font-size: 0.9rem; }
-    #loading { gap: 20px; }
+    #loading h2 { font-size: 1.3rem; }
+    #loading p { font-size: 0.85rem; }
+    #loading { gap: 16px; padding: 24px 36px; }
   }
 
   /* ── ZOOM CONTROLS ── */
@@ -1815,24 +1831,29 @@ var cachedVenues = loadFromCache();
 if (cachedVenues) {
   console.log('Using cached venues:', cachedVenues.length);
   venues = cachedVenues;
-  render();
   
-  // Hide loading screen
+  // Hide loading screen IMMEDIATELY - no flash
   var loadingEl = document.getElementById('loading');
   if (loadingEl) {
-    loadingEl.classList.add('fade-out');
+    loadingEl.style.display = 'none';
     loadingEl.classList.remove('active');
-    setTimeout(function() {
-      loadingEl.style.display = 'none';
-    }, 400);
   }
   
+  render();
   clearInterval(si);
   locate(true);
   applyQueryParams();
   
   // Still try to fetch fresh data in background
   console.log('Fetching fresh data in background...');
+} else {
+  // No cache - show loading screen after brief delay to prevent flash on fast networks
+  setTimeout(function() {
+    var loadingEl = document.getElementById('loading');
+    if (loadingEl && loadingEl.classList.contains('active')) {
+      loadingEl.style.opacity = '1';
+    }
+  }, 200);
 }
 
 var xhr = new XMLHttpRequest();
