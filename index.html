@@ -1790,19 +1790,25 @@ function applyQueryParams() {
 var xhr = new XMLHttpRequest();
 xhr.open('GET', 'https://script.google.com/macros/s/AKfycbxR-T9OXmnkuikldlz_2VwZZHhDiKV8sCtJY7-pHjxPDYNAzsL078cUoKCszmaGRs1dTQ/exec?format=json&t=' + Date.now() + '');
 xhr.onload = function() {
+  console.log('XHR status:', xhr.status);
   if (xhr.status === 200) {
     try {
       venues = JSON.parse(xhr.responseText);
+      console.log('Venues loaded:', venues.length);
 
       render();
+      console.log('Markers rendered:', markers.length);
       
       // Fade out loading screen smoothly
       var loadingEl = document.getElementById('loading');
-      loadingEl.classList.add('fade-out');
-      loadingEl.classList.remove('active');
-      setTimeout(function() {
-        loadingEl.style.display = 'none';
-      }, 400); // Match CSS transition duration
+      if (loadingEl) {
+        loadingEl.classList.add('fade-out');
+        loadingEl.classList.remove('active');
+        setTimeout(function() {
+          loadingEl.style.display = 'none';
+          console.log('Loading screen hidden');
+        }, 400); // Match CSS transition duration
+      }
       
       clearInterval(si);
       locate(true);
@@ -1810,13 +1816,16 @@ xhr.onload = function() {
       // Apply URL query params after load
       applyQueryParams();
     } catch(e) {
+      console.error('Parse error:', e);
       document.getElementById('loading').innerHTML = '<h2>Error</h2><p>' + e.message + '</p>';
     }
   }
 };
 xhr.onerror = function() {
+  console.error('Network error');
   document.getElementById('loading').innerHTML = '<h2>Could not load</h2><p>Network error</p>';
 };
+console.log('Sending XHR request...');
 xhr.send();
 </script>
 </body>
