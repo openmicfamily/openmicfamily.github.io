@@ -220,7 +220,16 @@
   }
 
   /* ── MAP ── */
-  #map { flex: 1; }
+  #map { 
+    flex: 1;
+    opacity: 0;
+    animation: mapFadeIn 0.6s ease-out 0.1s forwards;
+  }
+  
+  @keyframes mapFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
 
   /* ── FILTER DRAWER (bottom sheet) ── */
   .drawer-backdrop {
@@ -386,18 +395,96 @@
   #loading {
     position: fixed;
     inset: 0;
-    background: var(--bg);
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     z-index: 9999;
     gap: 24px;
+    transition: opacity 0.4s ease-out;
+    pointer-events: none;
   }
 
-  #loading h2 { font-family: 'DM Serif Display', serif; font-size: 1.8rem; color: var(--accent); }
-  #loading p { color: var(--muted); font-size: 1rem; }
-  .spinner { width: 44px; height: 44px; border-radius: 50%; border: 3px solid var(--border); border-top: 3px solid var(--accent); }
+  /* DEFAULT (Option 1): Dimmed map visible - light overlay */
+  #loading {
+    background: rgba(15, 15, 15, 0.3);
+    backdrop-filter: blur(4px);
+  }
+
+  /* Option 2: Fade in gradually - no background, map fades in */
+  #loading.load-style-2 {
+    background: transparent;
+    backdrop-filter: none;
+  }
+
+  /* Option 3: Progressive - minimal overlay */
+  #loading.load-style-3 {
+    background: rgba(15, 15, 15, 0.15);
+    backdrop-filter: blur(2px);
+  }
+
+  /* Original black style - accessible via ?load=original */
+  #loading.load-style-original {
+    background: rgba(15, 15, 15, 0.85);
+    backdrop-filter: blur(8px);
+  }
+
+  #loading.fade-out {
+    opacity: 0;
+  }
+
+  #loading h2 { 
+    font-family: 'DM Serif Display', serif; 
+    font-size: 1.8rem; 
+    color: var(--accent);
+    text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+  }
+  
+  #loading p { 
+    color: var(--muted); 
+    font-size: 1rem;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+  }
+  
+  .spinner { 
+    width: 44px; 
+    height: 44px; 
+    border-radius: 50%; 
+    border: 3px solid var(--border); 
+    border-top: 3px solid var(--accent);
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+  }
+  
+  /* Map opacity during load - varies by style */
+  #loading.active ~ #app #map {
+    pointer-events: none;
+  }
+
+  /* Option 1 (default): Map visible at 40% */
+  #loading.active ~ #app #map {
+    opacity: 0.4;
+  }
+
+  /* Option 2: Map fades in from 0% to 30% during load */
+  #loading.load-style-2.active ~ #app #map {
+    opacity: 0;
+    animation: mapFadeInDuringLoad 1.2s ease-out forwards;
+  }
+
+  @keyframes mapFadeInDuringLoad {
+    from { opacity: 0; }
+    to { opacity: 0.3; }
+  }
+
+  /* Option 3: Map fully visible immediately */
+  #loading.load-style-3.active ~ #app #map {
+    opacity: 1;
+  }
+
+  /* Original: Map dimmed to 30% */
+  #loading.load-style-original.active ~ #app #map {
+    opacity: 0.3;
+  }
 
   /* ── ZOOM CONTROLS ── */
   .leaflet-control-zoom {
@@ -890,11 +977,29 @@
 <body>
 <div id="app">
 
-  <div id="loading">
+  <div id="loading" class="active">
     <div class="spinner"></div>
     <h2>London <em>Open Mics</em></h2>
     <p>Loading venues...</p>
   </div>
+
+  <script>
+    // Apply loading style immediately based on ?load= query param
+    (function() {
+      var params = new URLSearchParams(window.location.search);
+      var loadStyle = params.get('load');
+      var loadingEl = document.getElementById('loading');
+      
+      if (loadStyle === '2') {
+        loadingEl.classList.add('load-style-2');
+      } else if (loadStyle === '3') {
+        loadingEl.classList.add('load-style-3');
+      } else if (loadStyle === 'original') {
+        loadingEl.classList.add('load-style-original');
+      }
+      // else: use default (option 1)
+    })();
+  </script>
 
   <header>
     <h1>London <em>Open Mics</em></h1>
@@ -1732,7 +1837,15 @@ xhr.onload = function() {
       venues = JSON.parse(xhr.responseText);
 
       render();
-      document.getElementById('loading').style.display = 'none';
+      
+      // Fade out loading screen smoothly
+      var loadingEl = document.getElementById('loading');
+      loadingEl.classList.add('fade-out');
+      loadingEl.classList.remove('active');
+      setTimeout(function() {
+        loadingEl.style.display = 'none';
+      }, 400); // Match CSS transition duration
+      
       clearInterval(si);
       locate(true);
 
