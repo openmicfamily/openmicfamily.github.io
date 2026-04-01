@@ -1123,7 +1123,7 @@
 var COLOURS = { MONDAY:'#e05c5c', TUESDAY:'#e07a3a', WEDNESDAY:'#d4b84a', THURSDAY:'#5aaa6e', FRIDAY:'#4a8fd4', SATURDAY:'#7b64d4', SUNDAY:'#c45aaa' };
 var DAYS = ['MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY','SUNDAY'];
 
-var map = L.map('map', { center:[51.505,-0.12], zoom:11, zoomControl:false });
+var map = L.map('map', { center:[51.505,-0.12], zoom:11, zoomControl:false, markerZoomAnimation: true });
 L.control.zoom({ position:'bottomleft' }).addTo(map);
 // tile layer added below
 
