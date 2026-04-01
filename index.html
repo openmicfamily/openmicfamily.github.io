@@ -220,7 +220,16 @@
   }
 
   /* ── MAP ── */
-  #map { flex: 1; }
+  #map { 
+    flex: 1;
+    opacity: 0;
+    animation: mapFadeIn 0.6s ease-out 0.1s forwards;
+  }
+  
+  @keyframes mapFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
 
   /* ── FILTER DRAWER (bottom sheet) ── */
   .drawer-backdrop {
@@ -385,19 +394,48 @@
   /* ── LOADING ── */
   #loading {
     position: fixed;
-    inset: 0;
-    background: var(--bg);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     z-index: 9999;
     gap: 24px;
+    transition: opacity 0.4s ease-out;
+    pointer-events: none;
+    background: rgba(15, 15, 15, 0.85);
+    backdrop-filter: blur(8px);
+    padding: 32px 48px;
+    border-radius: 16px;
   }
 
-  #loading h2 { font-family: 'DM Serif Display', serif; font-size: 1.8rem; color: var(--accent); }
-  #loading p { color: var(--muted); font-size: 1rem; }
-  .spinner { width: 44px; height: 44px; border-radius: 50%; border: 3px solid var(--border); border-top: 3px solid var(--accent); }
+  #loading.fade-out {
+    opacity: 0;
+  }
+
+  #loading h2 { 
+    font-family: 'DM Serif Display', serif; 
+    font-size: 1.8rem; 
+    color: var(--accent);
+    text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+  }
+  
+  #loading p { 
+    color: var(--muted); 
+    font-size: 1rem;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+  }
+  
+  .spinner { 
+    width: 44px; 
+    height: 44px; 
+    border-radius: 50%; 
+    border: 3px solid var(--border); 
+    border-top: 3px solid var(--accent);
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+  }
 
   /* ── ZOOM CONTROLS ── */
   .leaflet-control-zoom {
@@ -890,7 +928,7 @@
 <body>
 <div id="app">
 
-  <div id="loading">
+  <div id="loading" class="active">
     <div class="spinner"></div>
     <h2>London <em>Open Mics</em></h2>
     <p>Loading venues...</p>
@@ -1168,6 +1206,7 @@ function render() {
       .bindPopup(popup(v),{maxWidth:300, autoPanPaddingTopLeft:[10,110], autoPanPaddingBottomRight:[10,20]})
       .bindTooltip(v.name,{permanent:true,direction:'top',offset:[0,-28],opacity:1,className:'v-tip v-tip-hide'})
       .addTo(map);
+    
     // Wire tooltip click directly to this specific marker
     (function(marker) {
       setTimeout(function() {
@@ -1726,26 +1765,65 @@ function applyQueryParams() {
 // ── LOAD ──
 var xhr = new XMLHttpRequest();
 xhr.open('GET', 'https://script.google.com/macros/s/AKfycbxR-T9OXmnkuikldlz_2VwZZHhDiKV8sCtJY7-pHjxPDYNAzsL078cUoKCszmaGRs1dTQ/exec?format=json&t=' + Date.now() + '');
+
+// Set a 15 second timeout
+xhr.timeout = 15000;
+
 xhr.onload = function() {
+  console.log('XHR status:', xhr.status);
   if (xhr.status === 200) {
     try {
       venues = JSON.parse(xhr.responseText);
+      console.log('Venues loaded:', venues.length);
 
       render();
-      document.getElementById('loading').style.display = 'none';
+      console.log('Markers rendered:', markers.length);
+      
+      // Fade out loading screen smoothly
+      var loadingEl = document.getElementById('loading');
+      if (loadingEl) {
+        loadingEl.classList.add('fade-out');
+        loadingEl.classList.remove('active');
+        setTimeout(function() {
+          loadingEl.style.display = 'none';
+          console.log('Loading screen hidden');
+        }, 400);
+      }
+      
       clearInterval(si);
       locate(true);
 
-          // Apply URL query params after load
+      // Apply URL query params after load
       applyQueryParams();
     } catch(e) {
-      document.getElementById('loading').innerHTML = '<h2>Error</h2><p>' + e.message + '</p>';
+      console.error('Parse error:', e);
+      var loadingEl = document.getElementById('loading');
+      loadingEl.innerHTML = '<h2>Error</h2><p>' + e.message + '</p><button onclick="location.reload()" style="margin-top:16px;padding:12px 24px;background:var(--accent);border:none;border-radius:8px;cursor:pointer;font-weight:600;">Retry</button>';
+      loadingEl.style.pointerEvents = 'auto';
     }
+  } else {
+    console.error('HTTP error:', xhr.status);
+    var loadingEl = document.getElementById('loading');
+    loadingEl.innerHTML = '<h2>Error ' + xhr.status + '</h2><p>Could not load venues</p><button onclick="location.reload()" style="margin-top:16px;padding:12px 24px;background:var(--accent);border:none;border-radius:8px;cursor:pointer;font-weight:600;">Retry</button>';
+    loadingEl.style.pointerEvents = 'auto';
   }
 };
+
 xhr.onerror = function() {
-  document.getElementById('loading').innerHTML = '<h2>Could not load</h2><p>Network error</p>';
+  console.error('Network error');
+  var loadingEl = document.getElementById('loading');
+  loadingEl.innerHTML = '<h2>Network Error</h2><p>Could not connect to server</p><button onclick="location.reload()" style="margin-top:16px;padding:12px 24px;background:var(--accent);border:none;border-radius:8px;cursor:pointer;font-weight:600;">Retry</button>';
+  loadingEl.style.pointerEvents = 'auto';
 };
+
+xhr.ontimeout = function() {
+  console.error('Request timeout');
+  var loadingEl = document.getElementById('loading');
+  loadingEl.innerHTML = '<h2>Timeout</h2><p>Server took too long to respond</p><button onclick="location.reload()" style="margin-top:16px;padding:12px 24px;background:var(--accent);border:none;border-radius:8px;cursor:pointer;font-weight:660;">Retry</button>';
+  loadingEl.style.pointerEvents = 'auto';
+};
+
+console.log('Sending XHR request...');
 xhr.send();
 </script>
 </body>
