@@ -7,6 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/leaflet.bouncemarker@1.0.3/bouncemarker.min.js"></script>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
@@ -231,19 +232,8 @@
     to { opacity: 1; }
   }
 
-  /* ── PIN DROP ANIMATION ── */
-  /* Simple drop animation - visual feedback that page loaded */
-  .m-pin {
-    animation: pinDrop 0.4s ease-out both;
-  }
-
-  @keyframes pinDrop {
-    0% {
-      transform: translateY(-30px);
-    }
-    100% {
-      transform: translateY(0);
-    }
+  .m-pin svg {
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.35));
   }
 
   /* ── FILTER DRAWER (bottom sheet) ── */
@@ -1000,7 +990,7 @@
 <div id="listView"></div>
 <button id="darkMapBtn" title="Toggle dark map" style="
   position:fixed;
-  bottom:90px;
+  bottom:32px;
   right:16px;
   width:48px;
   height:48px;
@@ -1018,7 +1008,7 @@
 ">🌙</button>
 <button id="locBtn" title="Go to my location" style="
   position:fixed;
-  bottom:32px;
+  bottom:90px;
   right:16px;
   width:48px;
   height:48px;
@@ -1225,7 +1215,7 @@ function render() {
   });
   for(var j=0;j<vis.length;j++){
     var v=vis[j];
-    var m=L.marker([v.lat,v.lng],{icon:icon(v.day,v.stale)})
+    var m=L.marker([v.lat,v.lng],{icon:icon(v.day,v.stale), bounceOnAdd: true})
       .bindPopup(popup(v),{maxWidth:300, autoPanPaddingTopLeft:[10,110], autoPanPaddingBottomRight:[10,20]})
       .bindTooltip(v.name,{permanent:true,direction:'top',offset:[0,-28],opacity:1,className:'v-tip v-tip-hide'})
       .addTo(map);
