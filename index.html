@@ -231,6 +231,30 @@
     to { opacity: 1; }
   }
 
+  /* ── PIN DROP ANIMATION ── */
+  .m-pin {
+    animation: pinDrop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    transform-origin: center bottom;
+  }
+
+  @keyframes pinDrop {
+    0% {
+      transform: translateY(-100px) scale(0.5);
+      opacity: 0;
+    }
+    60% {
+      transform: translateY(0) scale(1.05);
+      opacity: 1;
+    }
+    80% {
+      transform: translateY(-4px) scale(0.98);
+    }
+    100% {
+      transform: translateY(0) scale(1);
+      opacity: 1;
+    }
+  }
+
   /* ── FILTER DRAWER (bottom sheet) ── */
   .drawer-backdrop {
     position: fixed;
@@ -394,7 +418,9 @@
   /* ── LOADING ── */
   #loading {
     position: fixed;
-    inset: 0;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -403,30 +429,10 @@
     gap: 24px;
     transition: opacity 0.4s ease-out;
     pointer-events: none;
-  }
-
-  /* DEFAULT (Option 1): Dimmed map visible - light overlay */
-  #loading {
-    background: rgba(15, 15, 15, 0.3);
-    backdrop-filter: blur(4px);
-  }
-
-  /* Option 2: Fade in gradually - no background, map fades in */
-  #loading.load-style-2 {
-    background: transparent;
-    backdrop-filter: none;
-  }
-
-  /* Option 3: Progressive - minimal overlay */
-  #loading.load-style-3 {
-    background: rgba(15, 15, 15, 0.15);
-    backdrop-filter: blur(2px);
-  }
-
-  /* Original black style - accessible via ?load=original */
-  #loading.load-style-original {
     background: rgba(15, 15, 15, 0.85);
     backdrop-filter: blur(8px);
+    padding: 32px 48px;
+    border-radius: 16px;
   }
 
   #loading.fade-out {
@@ -453,37 +459,6 @@
     border: 3px solid var(--border); 
     border-top: 3px solid var(--accent);
     filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
-  }
-  
-  /* Map opacity during load - varies by style */
-  #loading.active ~ #app #map {
-    pointer-events: none;
-  }
-
-  /* Option 1 (default): Map visible at 40% */
-  #loading.active ~ #app #map {
-    opacity: 0.4;
-  }
-
-  /* Option 2: Map fades in from 0% to 30% during load */
-  #loading.load-style-2.active ~ #app #map {
-    opacity: 0;
-    animation: mapFadeInDuringLoad 1.2s ease-out forwards;
-  }
-
-  @keyframes mapFadeInDuringLoad {
-    from { opacity: 0; }
-    to { opacity: 0.3; }
-  }
-
-  /* Option 3: Map fully visible immediately */
-  #loading.load-style-3.active ~ #app #map {
-    opacity: 1;
-  }
-
-  /* Original: Map dimmed to 30% */
-  #loading.load-style-original.active ~ #app #map {
-    opacity: 0.3;
   }
 
   /* ── ZOOM CONTROLS ── */
@@ -982,24 +957,6 @@
     <h2>London <em>Open Mics</em></h2>
     <p>Loading venues...</p>
   </div>
-
-  <script>
-    // Apply loading style immediately based on ?load= query param
-    (function() {
-      var params = new URLSearchParams(window.location.search);
-      var loadStyle = params.get('load');
-      var loadingEl = document.getElementById('loading');
-      
-      if (loadStyle === '2') {
-        loadingEl.classList.add('load-style-2');
-      } else if (loadStyle === '3') {
-        loadingEl.classList.add('load-style-3');
-      } else if (loadStyle === 'original') {
-        loadingEl.classList.add('load-style-original');
-      }
-      // else: use default (option 1)
-    })();
-  </script>
 
   <header>
     <h1>London <em>Open Mics</em></h1>
