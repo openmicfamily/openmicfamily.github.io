@@ -1296,7 +1296,7 @@ document.addEventListener('click',function(e){ if(!searchInput.contains(e.target
 
 // ── MAP TILE TOGGLE ──
 var TILES_LIGHT = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
-var TILES_DARK  = 'https://{s}.basemaps.cartocdn.com/dark_matter_lite/{z}/{x}/{y}{r}.png';
+var TILES_DARK  = 'https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png?api_key=59fe340d-2bd2-483b-8043-bb4f41ce3b18';
 var isDarkMap = false;
 var tileLayer = L.tileLayer(TILES_LIGHT, { attribution:'&copy; OSM &copy; CartoDB', maxZoom:19 });
 tileLayer.addTo(map);
