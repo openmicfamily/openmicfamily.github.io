@@ -1763,65 +1763,147 @@ function applyQueryParams() {
 }
 
 // ── LOAD ──
+var CACHE_KEY = 'omf_venues_cache';
+var CACHE_TIMESTAMP_KEY = 'omf_venues_cache_time';
+var CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+// Try to load from cache first
+function loadFromCache() {
+  try {
+    var cached = localStorage.getItem(CACHE_KEY);
+    var timestamp = localStorage.getItem(CACHE_TIMESTAMP_KEY);
+    
+    if (cached && timestamp) {
+      var age = Date.now() - parseInt(timestamp);
+      if (age < CACHE_DURATION) {
+        console.log('Loading from cache (age: ' + Math.round(age/1000) + 's)');
+        return JSON.parse(cached);
+      }
+    }
+  } catch(e) {
+    console.warn('Cache read failed:', e);
+  }
+  return null;
+}
+
+function saveToCache(data) {
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+    localStorage.setItem(CACHE_TIMESTAMP_KEY, Date.now().toString());
+    console.log('Saved to cache');
+  } catch(e) {
+    console.warn('Cache write failed:', e);
+  }
+}
+
+function showCachedDataWarning() {
+  var banner = document.createElement('div');
+  banner.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#e8c547;color:#000;padding:12px;text-align:center;z-index:10000;font-size:14px;font-weight:600;';
+  banner.innerHTML = '⚠️ Using cached data - API temporarily unavailable <button onclick="this.parentElement.remove()" style="margin-left:16px;padding:4px 12px;background:#000;color:#e8c547;border:none;border-radius:4px;cursor:pointer;font-weight:600;">Dismiss</button>';
+  document.body.appendChild(banner);
+}
+
+// Check cache first
+var cachedVenues = loadFromCache();
+if (cachedVenues) {
+  console.log('Using cached venues:', cachedVenues.length);
+  venues = cachedVenues;
+  render();
+  
+  // Hide loading screen
+  var loadingEl = document.getElementById('loading');
+  if (loadingEl) {
+    loadingEl.classList.add('fade-out');
+    loadingEl.classList.remove('active');
+    setTimeout(function() {
+      loadingEl.style.display = 'none';
+    }, 400);
+  }
+  
+  clearInterval(si);
+  locate(true);
+  applyQueryParams();
+  
+  // Still try to fetch fresh data in background
+  console.log('Fetching fresh data in background...');
+}
+
 var xhr = new XMLHttpRequest();
 xhr.open('GET', 'https://script.google.com/macros/s/AKfycbxR-T9OXmnkuikldlz_2VwZZHhDiKV8sCtJY7-pHjxPDYNAzsL078cUoKCszmaGRs1dTQ/exec?format=json&t=' + Date.now() + '');
 
-// Set a 15 second timeout
-xhr.timeout = 15000;
+// Increase timeout to 30 seconds
+xhr.timeout = 30000;
 
 xhr.onload = function() {
   console.log('XHR status:', xhr.status);
   if (xhr.status === 200) {
     try {
-      venues = JSON.parse(xhr.responseText);
-      console.log('Venues loaded:', venues.length);
+      var freshVenues = JSON.parse(xhr.responseText);
+      console.log('Fresh venues loaded:', freshVenues.length);
 
-      render();
-      console.log('Markers rendered:', markers.length);
-      
-      // Fade out loading screen smoothly
-      var loadingEl = document.getElementById('loading');
-      if (loadingEl) {
-        loadingEl.classList.add('fade-out');
-        loadingEl.classList.remove('active');
-        setTimeout(function() {
-          loadingEl.style.display = 'none';
-          console.log('Loading screen hidden');
-        }, 400);
+      // Save to cache
+      saveToCache(freshVenues);
+
+      // If we already showed cached data, just update silently
+      if (cachedVenues) {
+        venues = freshVenues;
+        render();
+        if (currentView === 'list') renderList();
+        console.log('Updated with fresh data');
+      } else {
+        // First load - show data normally
+        venues = freshVenues;
+        render();
+        console.log('Markers rendered:', markers.length);
+        
+        // Fade out loading screen smoothly
+        var loadingEl = document.getElementById('loading');
+        if (loadingEl) {
+          loadingEl.classList.add('fade-out');
+          loadingEl.classList.remove('active');
+          setTimeout(function() {
+            loadingEl.style.display = 'none';
+            console.log('Loading screen hidden');
+          }, 400);
+        }
+        
+        clearInterval(si);
+        locate(true);
+        applyQueryParams();
       }
-      
-      clearInterval(si);
-      locate(true);
-
-      // Apply URL query params after load
-      applyQueryParams();
     } catch(e) {
       console.error('Parse error:', e);
-      var loadingEl = document.getElementById('loading');
-      loadingEl.innerHTML = '<h2>Error</h2><p>' + e.message + '</p><button onclick="location.reload()" style="margin-top:16px;padding:12px 24px;background:var(--accent);border:none;border-radius:8px;cursor:pointer;font-weight:600;">Retry</button>';
-      loadingEl.style.pointerEvents = 'auto';
+      handleError('Parse Error', e.message);
     }
   } else {
     console.error('HTTP error:', xhr.status);
-    var loadingEl = document.getElementById('loading');
-    loadingEl.innerHTML = '<h2>Error ' + xhr.status + '</h2><p>Could not load venues</p><button onclick="location.reload()" style="margin-top:16px;padding:12px 24px;background:var(--accent);border:none;border-radius:8px;cursor:pointer;font-weight:600;">Retry</button>';
-    loadingEl.style.pointerEvents = 'auto';
+    handleError('Error ' + xhr.status, 'Could not load venues');
   }
 };
 
 xhr.onerror = function() {
   console.error('Network error');
-  var loadingEl = document.getElementById('loading');
-  loadingEl.innerHTML = '<h2>Network Error</h2><p>Could not connect to server</p><button onclick="location.reload()" style="margin-top:16px;padding:12px 24px;background:var(--accent);border:none;border-radius:8px;cursor:pointer;font-weight:600;">Retry</button>';
-  loadingEl.style.pointerEvents = 'auto';
+  handleError('Network Error', 'Could not connect to server');
 };
 
 xhr.ontimeout = function() {
-  console.error('Request timeout');
-  var loadingEl = document.getElementById('loading');
-  loadingEl.innerHTML = '<h2>Timeout</h2><p>Server took too long to respond</p><button onclick="location.reload()" style="margin-top:16px;padding:12px 24px;background:var(--accent);border:none;border-radius:8px;cursor:pointer;font-weight:660;">Retry</button>';
-  loadingEl.style.pointerEvents = 'auto';
+  console.error('Request timeout (30s)');
+  handleError('Timeout', 'Server took too long to respond');
 };
+
+function handleError(title, message) {
+  // If we have cached data, use it and show warning
+  if (cachedVenues) {
+    console.log('API failed but using cached data');
+    showCachedDataWarning();
+    return;
+  }
+  
+  // No cache - show error with retry
+  var loadingEl = document.getElementById('loading');
+  loadingEl.innerHTML = '<h2>' + title + '</h2><p>' + message + '</p><button onclick="location.reload()" style="margin-top:16px;padding:12px 24px;background:var(--accent);border:none;border-radius:8px;cursor:pointer;font-weight:600;color:#000;">Retry</button>';
+  loadingEl.style.pointerEvents = 'auto';
+}
 
 console.log('Sending XHR request...');
 xhr.send();
