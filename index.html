@@ -1215,10 +1215,18 @@ function render() {
   });
   for(var j=0;j<vis.length;j++){
     var v=vis[j];
+    
+    // Random stagger delay (0-800ms spread across all pins)
+    var randomDelay = Math.random() * 800;
+    
     var m=L.marker([v.lat,v.lng],{
       icon:icon(v.day,v.stale),
       bounceOnAdd: true,
-      bounceOnAddOptions: {duration: 400, height: 50}
+      bounceOnAddOptions: {
+        duration: 500,
+        height: 200,  // Drop from 200px above (off-screen)
+        delay: randomDelay
+      }
     })
       .bindPopup(popup(v),{maxWidth:300, autoPanPaddingTopLeft:[10,110], autoPanPaddingBottomRight:[10,20]})
       .bindTooltip(v.name,{permanent:true,direction:'top',offset:[0,-34],opacity:1,className:'v-tip v-tip-hide'})
