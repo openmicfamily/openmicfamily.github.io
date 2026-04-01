@@ -233,7 +233,7 @@
   }
 
   .m-pin svg {
-    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.35));
+    filter: drop-shadow(3px 4px 6px rgba(0,0,0,0.4));
   }
 
   /* ── FILTER DRAWER (bottom sheet) ── */
@@ -1216,16 +1216,16 @@ function render() {
   for(var j=0;j<vis.length;j++){
     var v=vis[j];
     
-    // Random stagger delay (0-800ms spread across all pins)
-    var randomDelay = Math.random() * 800;
+    // Stagger by index (25ms per pin, max 2 seconds spread)
+    var staggerDelay = Math.min(j * 25, 2000);
     
     var m=L.marker([v.lat,v.lng],{
       icon:icon(v.day,v.stale),
       bounceOnAdd: true,
       bounceOnAddOptions: {
-        duration: 500,
-        height: 200,  // Drop from 200px above (off-screen)
-        delay: randomDelay
+        duration: 400,
+        height: 500,  // Drop from way off-screen
+        delay: staggerDelay
       }
     })
       .bindPopup(popup(v),{maxWidth:300, autoPanPaddingTopLeft:[10,110], autoPanPaddingBottomRight:[10,20]})
@@ -1874,12 +1874,18 @@ xhr.onload = function() {
       // Save to cache
       saveToCache(freshVenues);
 
-      // If we already showed cached data, just update silently
+      // If we already showed cached data, only update if data changed
       if (cachedVenues) {
-        venues = freshVenues;
-        render();
-        if (currentView === 'list') renderList();
-        console.log('Updated with fresh data');
+        // Check if data actually changed
+        if (JSON.stringify(freshVenues) !== JSON.stringify(cachedVenues)) {
+          venues = freshVenues;
+          render();
+          if (currentView === 'list') renderList();
+          console.log('Updated with fresh data (data changed)');
+        } else {
+          venues = freshVenues; // Update reference but don't re-render
+          console.log('Fresh data same as cache, no re-render');
+        }
       } else {
         // First load - show data normally
         venues = freshVenues;
