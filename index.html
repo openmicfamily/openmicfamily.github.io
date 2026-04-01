@@ -231,6 +231,32 @@
     to { opacity: 1; }
   }
 
+  /* ── PIN DROP ANIMATION ── */
+  .m-pin {
+    animation: pinDrop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    transform-origin: center bottom;
+  }
+
+  @keyframes pinDrop {
+    0% {
+      transform: translateY(-200px) scale(0.3);
+      opacity: 0;
+    }
+    50% {
+      opacity: 1;
+    }
+    70% {
+      transform: translateY(0) scale(1.1);
+    }
+    85% {
+      transform: translateY(-8px) scale(0.95);
+    }
+    100% {
+      transform: translateY(0) scale(1);
+      opacity: 1;
+    }
+  }
+
   /* ── FILTER DRAWER (bottom sheet) ── */
   .drawer-backdrop {
     position: fixed;
@@ -1273,6 +1299,22 @@ function render() {
       .bindPopup(popup(v),{maxWidth:300, autoPanPaddingTopLeft:[10,110], autoPanPaddingBottomRight:[10,20]})
       .bindTooltip(v.name,{permanent:true,direction:'top',offset:[0,-28],opacity:1,className:'v-tip v-tip-hide'})
       .addTo(map);
+    
+    // Add staggered animation delay
+    (function(marker, index) {
+      setTimeout(function() {
+        var el = marker.getElement();
+        if (el) {
+          var pin = el.querySelector('.m-pin');
+          if (pin) {
+            // Stagger by 25ms per pin, max 2 second delay
+            var delay = Math.min(index * 25, 2000);
+            pin.style.animationDelay = delay + 'ms';
+          }
+        }
+      }, 10);
+    })(m, j);
+    
     // Wire tooltip click directly to this specific marker
     (function(marker) {
       setTimeout(function() {
@@ -1829,6 +1871,9 @@ function applyQueryParams() {
 }
 
 // ── LOAD ──
+var loadStartTime = Date.now();
+var MIN_LOADING_TIME = 1500; // Minimum 1.5 seconds to show loading screen & animations
+
 var xhr = new XMLHttpRequest();
 xhr.open('GET', 'https://script.google.com/macros/s/AKfycbxR-T9OXmnkuikldlz_2VwZZHhDiKV8sCtJY7-pHjxPDYNAzsL078cUoKCszmaGRs1dTQ/exec?format=json&t=' + Date.now() + '');
 xhr.onload = function() {
@@ -1836,21 +1881,34 @@ xhr.onload = function() {
     try {
       venues = JSON.parse(xhr.responseText);
 
-      render();
+      // Check for ?delay= param to simulate slow network (for testing loading screens)
+      var params = new URLSearchParams(window.location.search);
+      var testDelay = parseInt(params.get('delay')) || 0;
       
-      // Fade out loading screen smoothly
-      var loadingEl = document.getElementById('loading');
-      loadingEl.classList.add('fade-out');
-      loadingEl.classList.remove('active');
+      // Calculate how long loading screen has been visible
+      var elapsed = Date.now() - loadStartTime;
+      var remainingTime = Math.max(0, MIN_LOADING_TIME - elapsed);
+      
+      // Add test delay if specified, otherwise ensure minimum display time
+      var totalDelay = testDelay || remainingTime;
+      
       setTimeout(function() {
-        loadingEl.style.display = 'none';
-      }, 400); // Match CSS transition duration
-      
-      clearInterval(si);
-      locate(true);
+        render();
+        
+        // Fade out loading screen smoothly
+        var loadingEl = document.getElementById('loading');
+        loadingEl.classList.add('fade-out');
+        loadingEl.classList.remove('active');
+        setTimeout(function() {
+          loadingEl.style.display = 'none';
+        }, 400); // Match CSS transition duration
+        
+        clearInterval(si);
+        locate(true);
 
-          // Apply URL query params after load
-      applyQueryParams();
+        // Apply URL query params after load
+        applyQueryParams();
+      }, totalDelay);
     } catch(e) {
       document.getElementById('loading').innerHTML = '<h2>Error</h2><p>' + e.message + '</p>';
     }
