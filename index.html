@@ -1140,12 +1140,12 @@ function icon(day, stale) {
   var c = stale ? '#888' : (COLOURS[day] || '#888');
   var opacity = stale ? '0.5' : '1';
   var warning = stale ? '<div style="position:absolute;top:-6px;right:-2px;background:#e8c547;color:#000;border-radius:50%;width:14px;height:14px;font-size:9px;display:flex;align-items:center;justify-content:center;font-weight:bold;box-shadow:0 1px 3px rgba(0,0,0,0.3)">?</div>' : '';
-  var svg = '<svg width="22" height="30" viewBox="0 0 20 28" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+  var svg = '<svg width="24" height="32" viewBox="0 0 20 28" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block;">' +
     '<path d="M10 0C4.477 0 0 4.477 0 10c0 7.5 10 18 10 18S20 17.5 20 10C20 4.477 15.523 0 10 0z" fill="' + c + '"/>' +
     '<circle cx="10" cy="10" r="4" fill="rgba(255,255,255,0.35)"/>' +
     '<path d="M10 0C4.477 0 0 4.477 0 10c0 7.5 10 18 10 18S20 17.5 20 10C20 4.477 15.523 0 10 0z" fill="none" stroke="white" stroke-width="1.5"/>' +
     '</svg>';
-  return L.divIcon({ className:'m-pin', html:'<div style="width:44px;height:44px;display:flex;align-items:center;justify-content:center;position:relative;opacity:' + opacity + '">' + svg + warning + '</div>', iconSize:[44,44], iconAnchor:[22,40], popupAnchor:[0,-40] });
+  return L.divIcon({ className:'m-pin', html:'<div style="width:48px;height:48px;display:flex;align-items:center;justify-content:center;position:relative;opacity:' + opacity + ';overflow:visible;">' + svg + warning + '</div>', iconSize:[48,48], iconAnchor:[24,44], popupAnchor:[0,-44] });
 }
 
 function tc(s){ return s ? s[0].toUpperCase()+s.slice(1).toLowerCase() : ''; }
