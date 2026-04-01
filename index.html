@@ -437,6 +437,13 @@
     filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
   }
 
+  /* Mobile adjustments for loading card */
+  @media (max-width: 768px) {
+    #loading h2 { font-size: 1.5rem; }
+    #loading p { font-size: 0.9rem; }
+    #loading { gap: 20px; }
+  }
+
   /* ── ZOOM CONTROLS ── */
   .leaflet-control-zoom {
     border: none !important;
