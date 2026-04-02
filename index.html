@@ -11,13 +11,13 @@
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
   :root {
-    --bg: #0f0f0f;
-    --surface: #1a1a1a;
-    --surface2: #2a2a2a;
-    --border: #333;
-    --text: #f0ece4;
-    --muted: #999;
-    --accent: #e8c547;
+    --bg: #f5f5f5;
+    --surface: #fff;
+    --surface2: #f8f8f8;
+    --border: #ddd;
+    --text: #333;
+    --muted: #666;
+    --accent: #c9a636;
     --mon: #e05c5c;
     --tue: #e07a3a;
     --wed: #d4b84a;
@@ -1400,6 +1400,26 @@ document.getElementById('darkMapBtn').addEventListener('click', function() {
   this.textContent = isDarkMap ? '☀️' : '🌙';
   this.style.background = isDarkMap ? '#2a2a2a' : '#fff';
   this.style.color = isDarkMap ? '#f0ece4' : '#333';
+
+  // Update CSS variables for dark/light mode
+  var root = document.documentElement;
+  if (isDarkMap) {
+    root.style.setProperty('--bg', '#0f0f0f');
+    root.style.setProperty('--surface', '#1a1a1a');
+    root.style.setProperty('--surface2', '#2a2a2a');
+    root.style.setProperty('--border', '#333');
+    root.style.setProperty('--text', '#f0ece4');
+    root.style.setProperty('--muted', '#999');
+    root.style.setProperty('--accent', '#e8c547');
+  } else {
+    root.style.setProperty('--bg', '#f5f5f5');
+    root.style.setProperty('--surface', '#fff');
+    root.style.setProperty('--surface2', '#f8f8f8');
+    root.style.setProperty('--border', '#ddd');
+    root.style.setProperty('--text', '#333');
+    root.style.setProperty('--muted', '#666');
+    root.style.setProperty('--accent', '#c9a636');
+  }
 
   // Muted pin colours for dark map
   var COLOURS_DARK = { MONDAY:'#8a3a3a', TUESDAY:'#8a4a24', WEDNESDAY:'#7a6a28', THURSDAY:'#2a6040', FRIDAY:'#2a5080', SATURDAY:'#3e3378', SUNDAY:'#6e2e62' };
