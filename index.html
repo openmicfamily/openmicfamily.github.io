@@ -553,7 +553,7 @@
     width: 36px; 
     height: 34px;
     border-radius: 8px;
-    color: #666;
+    color: #555;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -564,18 +564,18 @@
   }
 
   .view-option.active {
-    color: #f0ece4;
+    color: #ffffff;
   }
 
-  /* Sliding background indicator with yellow outline */
+  /* Sliding background indicator - high contrast dark */
   .view-toggle::before {
     content: '';
     position: absolute;
     width: 36px;
     height: 34px;
-    background: #1a1a1a;
+    background: #0a0a0a;
     border-radius: 8px;
-    box-shadow: 0 0 0 1.5px #e8c547, 0 2px 6px rgba(232, 197, 71, 0.3);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.5);
     transition: transform 0.2s ease;
     left: 3px;
     top: 3px;
