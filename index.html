@@ -409,8 +409,8 @@
     gap: 24px;
     transition: opacity 0.4s ease-out;
     pointer-events: none;
-    background: rgba(15, 15, 15, 0.85);
-    backdrop-filter: blur(8px);
+    background: rgba(15, 15, 15, 0.1);
+    backdrop-filter: blur(1px);
     padding: 32px 48px;
     border-radius: 16px;
     opacity: 0;
@@ -543,26 +543,47 @@
     border-radius: 10px;
     padding: 3px;
     flex-shrink: 0;
+    border: none;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s ease;
   }
 
-  .view-btn {
-    width: 36px; height: 34px;
-    border: none;
+  .view-option {
+    width: 36px; 
+    height: 34px;
     border-radius: 8px;
-    background: transparent;
     color: var(--muted);
-    cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 1.1rem;
-    transition: all 0.15s;
+    transition: all 0.2s ease;
+    position: relative;
+    z-index: 1;
   }
 
-  .view-btn.active {
-    background: var(--surface);
+  .view-option.active {
     color: var(--text);
+  }
+
+  /* Sliding background indicator */
+  .view-toggle::before {
+    content: '';
+    position: absolute;
+    width: 36px;
+    height: 34px;
+    background: var(--surface);
+    border-radius: 8px;
     box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+    transition: transform 0.2s ease;
+    left: 3px;
+    top: 3px;
+    z-index: 0;
+  }
+
+  .view-toggle.list-active::before {
+    transform: translateX(39px); /* 36px width + 3px gap */
   }
 
   #listView {
@@ -980,16 +1001,16 @@
       <button class="search-x" id="searchX">✕</button>
       <div class="search-results" id="searchResults"></div>
     </div>
-    <div class="view-toggle">
-      <button class="view-btn active" id="mapViewBtn" title="Map view">🌍</button>
-      <button class="view-btn" id="listViewBtn" title="List view">
+    <button class="view-toggle" id="viewToggle" title="Toggle view">
+      <div class="view-option" id="mapOption">🌍</div>
+      <div class="view-option" id="listOption">
         <svg width="16" height="14" viewBox="0 0 16 14" fill="currentColor">
           <circle cx="2" cy="2" r="1.5"/><rect x="5" y="1" width="11" height="2" rx="1"/>
           <circle cx="2" cy="7" r="1.5"/><rect x="5" y="6" width="11" height="2" rx="1"/>
           <circle cx="2" cy="12" r="1.5"/><rect x="5" y="11" width="11" height="2" rx="1"/>
         </svg>
-      </button>
-    </div>
+      </div>
+    </button>
   </div>
 </div>
 
@@ -1220,50 +1241,61 @@ function render() {
   var vis=venues.filter(function(v){
     return (activeDay==='ALL'||v.day===activeDay) && (!q||v.name.toLowerCase().indexOf(q)!==-1||v.location.toLowerCase().indexOf(q)!==-1) && v.lat && v.lng && matchesEquip(v);
   });
+  
+  // Add pins progressively with tiny delay for visual feedback
   for(var j=0;j<vis.length;j++){
-    var v=vis[j];
-    var m=L.marker([v.lat,v.lng],{icon:icon(v.day,v.stale)})
-      .bindPopup(popup(v),{maxWidth:300, autoPanPaddingTopLeft:[10,110], autoPanPaddingBottomRight:[10,20]})
-      .bindTooltip(v.name,{permanent:true,direction:'top',offset:[0,-34],opacity:1,className:'v-tip v-tip-hide'})
-      .addTo(map);
-    
-    // Wire tooltip click directly to this specific marker
-    (function(marker) {
+    (function(index, venue) {
       setTimeout(function() {
-        var tip = marker.getTooltip();
-        if (!tip) return;
-        var el = tip.getElement();
-        if (!el) return;
-        el.addEventListener('click', function(e) {
-          e.stopPropagation();
-          marker.openPopup();
-        });
-        el.addEventListener('touchend', function(e) {
-          e.preventDefault();
-          e.stopPropagation();
-          marker.openPopup();
-        });
-      }, 50);
-    })(m);
-    if (isAdmin) {
-      (function(venue, marker) {
-        marker.on('popupopen', function() {
-          var el = marker.getPopup().getElement();
-          if (!el) return;
-          var existing = el.querySelector('.admin-edit-btn');
-          if (existing) return;
-          var btn = document.createElement('button');
-          btn.className = 'admin-edit-btn';
-          btn.textContent = '✏️ Edit this venue';
-          btn.onclick = function() { marker.closePopup(); openEditDrawer(venue); };
-          el.querySelector('.leaflet-popup-content').appendChild(btn);
-        });
-      })(v, m);
-    }
-    markers.push(m);
+        var m=L.marker([venue.lat,venue.lng],{icon:icon(venue.day,venue.stale)})
+          .bindPopup(popup(venue),{maxWidth:300, autoPanPaddingTopLeft:[10,110], autoPanPaddingBottomRight:[10,20]})
+          .bindTooltip(venue.name,{permanent:true,direction:'top',offset:[0,-34],opacity:1,className:'v-tip v-tip-hide'})
+          .addTo(map);
+        
+        // Wire tooltip click directly to this specific marker
+        (function(marker) {
+          setTimeout(function() {
+            var tip = marker.getTooltip();
+            if (!tip) return;
+            var el = tip.getElement();
+            if (!el) return;
+            el.addEventListener('click', function(e) {
+              e.stopPropagation();
+              marker.openPopup();
+            });
+            el.addEventListener('touchend', function(e) {
+              e.preventDefault();
+              e.stopPropagation();
+              marker.openPopup();
+            });
+          }, 50);
+        })(m);
+        
+        if (isAdmin) {
+          (function(v, marker) {
+            marker.on('popupopen', function() {
+              var el = marker.getPopup().getElement();
+              if (!el) return;
+              var existing = el.querySelector('.admin-edit-btn');
+              if (existing) return;
+              var btn = document.createElement('button');
+              btn.className = 'admin-edit-btn';
+              btn.textContent = '✏️ Edit this venue';
+              btn.onclick = function() { marker.closePopup(); openEditDrawer(v); };
+              el.querySelector('.leaflet-popup-content').appendChild(btn);
+            });
+          })(venue, m);
+        }
+        
+        markers.push(m);
+        
+        // Update counts/tips after each batch
+        if (index % 10 === 0 || index === vis.length - 1) {
+          updateTips();
+          updateCounts();
+        }
+      }, index * 8);  // 8ms between each pin = ~660ms for 83 pins
+    })(j, vis[j]);
   }
-  updateTips();
-  updateCounts();
 }
 
 // ── TOOLTIPS ──
@@ -1493,30 +1525,44 @@ function formatDist(miles) {
   return Math.round(miles) + ' mi';
 }
 
-var mapViewBtn = document.getElementById('mapViewBtn');
-var listViewBtn = document.getElementById('listViewBtn');
-if (mapViewBtn) mapViewBtn.addEventListener('click', function() { setView('map'); });
-if (listViewBtn) listViewBtn.addEventListener('click', function() { setView('list'); });
+var viewToggle = document.getElementById('viewToggle');
+var mapOption = document.getElementById('mapOption');
+var listOption = document.getElementById('listOption');
+
+if (viewToggle) {
+  viewToggle.addEventListener('click', function() {
+    // Toggle between views
+    if (currentView === 'map') {
+      setView('list');
+    } else {
+      setView('map');
+    }
+  });
+}
 
 function setView(v) {
   currentView = v;
   var mapEl = document.getElementById('map');
   var listEl = document.getElementById('listView');
   var locBtn = document.getElementById('locBtn');
-  var mapBtn = document.getElementById('mapViewBtn');
-  var listBtn = document.getElementById('listViewBtn');
+  var toggle = document.getElementById('viewToggle');
+  var mapOpt = document.getElementById('mapOption');
+  var listOpt = document.getElementById('listOption');
+  
   if (v === 'map') {
     mapEl.style.display = 'block';
     listEl.style.display = 'none';
     locBtn.style.display = '';
-    mapBtn.classList.add('active');
-    listBtn.classList.remove('active');
+    if (toggle) toggle.classList.remove('list-active');
+    if (mapOpt) mapOpt.classList.add('active');
+    if (listOpt) listOpt.classList.remove('active');
   } else {
     mapEl.style.display = 'none';
     listEl.style.display = 'block';
     locBtn.style.display = 'none';
-    mapBtn.classList.remove('active');
-    listBtn.classList.add('active');
+    if (toggle) toggle.classList.add('list-active');
+    if (mapOpt) mapOpt.classList.remove('active');
+    if (listOpt) listOpt.classList.add('active');
     renderList();
   }
 }
