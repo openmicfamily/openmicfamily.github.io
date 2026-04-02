@@ -782,18 +782,18 @@
     gap: 14px;
     padding: 16px;
     border-radius: 14px;
-    background: var(--surface2);
-    border: 1.5px solid var(--border);
+    background: #2a2a2a;
+    border: 1.5px solid #333;
     cursor: pointer;
     font-size: 1rem;
     font-weight: 500;
-    color: var(--text);
+    color: #f0ece4;
     transition: all 0.15s;
     -webkit-tap-highlight-color: transparent;
   }
 
   .equip-item.active {
-    border-color: var(--accent);
+    border-color: #e8c547;
     background: rgba(232,197,71,0.12);
   }
 
@@ -802,7 +802,7 @@
     height: 22px;
     min-width: 22px;
     border-radius: 50%;
-    border: 2px solid var(--muted);
+    border: 2px solid #999;
     flex-shrink: 0;
     position: relative;
     background: transparent;
@@ -810,8 +810,8 @@
   }
 
   .equip-item.active .equip-check {
-    background: var(--accent);
-    border-color: var(--accent);
+    background: #e8c547;
+    border-color: #e8c547;
   }
 
   .equip-item.active .equip-check::after {
@@ -1110,7 +1110,7 @@
     </div>
   </div>
 
-  <div class="drawer-title" style="padding: 16px 20px 12px; margin-top: 4px; border-top: 1px solid var(--border);">Filter by equipment</div>
+  <div class="drawer-title" style="padding: 16px 20px 12px; margin-top: 4px; border-top: 1px solid #333;">Filter by equipment</div>
   <div class="equip-list" id="equipList">
     <div class="equip-item" data-filter="backingTracks">
       <div class="equip-check" id="chk-backingTracks"></div>
@@ -1567,6 +1567,7 @@ function setView(v) {
   var mapEl = document.getElementById('map');
   var listEl = document.getElementById('listView');
   var locBtn = document.getElementById('locBtn');
+  var darkBtn = document.getElementById('darkMapBtn');
   var toggle = document.getElementById('viewToggle');
   var mapOpt = document.getElementById('mapOption');
   var listOpt = document.getElementById('listOption');
@@ -1575,6 +1576,7 @@ function setView(v) {
     mapEl.style.display = 'block';
     listEl.style.display = 'none';
     locBtn.style.display = '';
+    if (darkBtn) darkBtn.style.display = '';
     if (toggle) toggle.classList.remove('list-active');
     if (mapOpt) mapOpt.classList.add('active');
     if (listOpt) listOpt.classList.remove('active');
@@ -1582,6 +1584,7 @@ function setView(v) {
     mapEl.style.display = 'none';
     listEl.style.display = 'block';
     locBtn.style.display = 'none';
+    if (darkBtn) darkBtn.style.display = 'none';
     if (toggle) toggle.classList.add('list-active');
     if (mapOpt) mapOpt.classList.remove('active');
     if (listOpt) listOpt.classList.add('active');
