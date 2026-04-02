@@ -539,7 +539,7 @@
   .view-toggle {
     display: flex;
     gap: 3px;
-    background: var(--surface2);
+    background: #2a2a2a;
     border-radius: 10px;
     padding: 3px;
     flex-shrink: 0;
@@ -553,7 +553,7 @@
     width: 36px; 
     height: 34px;
     border-radius: 8px;
-    color: var(--muted);
+    color: #666;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -564,18 +564,18 @@
   }
 
   .view-option.active {
-    color: var(--text);
+    color: #f0ece4;
   }
 
-  /* Sliding background indicator */
+  /* Sliding background indicator with yellow outline */
   .view-toggle::before {
     content: '';
     position: absolute;
     width: 36px;
     height: 34px;
-    background: var(--surface);
+    background: #1a1a1a;
     border-radius: 8px;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+    box-shadow: 0 0 0 1.5px #e8c547, 0 2px 6px rgba(232, 197, 71, 0.3);
     transition: transform 0.2s ease;
     left: 3px;
     top: 3px;
@@ -590,7 +590,7 @@
     flex: 1;
     overflow-y: auto;
     display: none;
-    background: var(--bg);
+    background: #0f0f0f;
   }
 
   .list-day-header {
@@ -599,8 +599,8 @@
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.1em;
-    color: var(--muted);
-    background: var(--bg);
+    color: #999;
+    background: #0f0f0f;
     position: sticky;
     top: 0;
     z-index: 10;
@@ -617,15 +617,15 @@
 
   .venue-card {
     margin: 0 10px 6px;
-    background: var(--surface);
+    background: #1a1a1a;
     border-radius: 14px;
-    border: 1px solid var(--border);
+    border: 1px solid #333;
     overflow: hidden;
     cursor: pointer;
     transition: border-color 0.15s;
   }
 
-  .venue-card:active { border-color: var(--accent); }
+  .venue-card:active { border-color: #e8c547; }
 
   .venue-card-header {
     padding: 10px 14px;
@@ -646,7 +646,7 @@
   .venue-card-name {
     font-size: 0.9rem;
     font-weight: 600;
-    color: var(--text);
+    color: #f0ece4;
     margin-bottom: 2px;
     white-space: nowrap;
     overflow: hidden;
@@ -655,7 +655,7 @@
 
   .venue-card-meta {
     font-size: 0.78rem;
-    color: var(--muted);
+    color: #999;
     display: grid;
     grid-template-columns: 1fr auto;
     align-items: start;
@@ -677,7 +677,7 @@
 
   .venue-distance {
     font-size: 0.78rem;
-    color: var(--accent);
+    color: #e8c547;
     font-weight: 500;
     flex-shrink: 0;
     grid-row: 1 / 3;
@@ -687,7 +687,7 @@
   }
 
   .venue-card-chevron {
-    color: var(--muted);
+    color: #999;
     font-size: 0.8rem;
     flex-shrink: 0;
     margin-top: 2px;
@@ -699,7 +699,7 @@
   .venue-card-body {
     display: none;
     padding: 0 12px 10px 36px;
-    border-top: 1px solid var(--border);
+    border-top: 1px solid #333;
   }
 
   .venue-card.open .venue-card-body { display: block; }
@@ -710,20 +710,20 @@
     align-items: flex-start;
     font-size: 0.78rem;
     line-height: 1.4;
-    color: var(--text);
+    color: #f0ece4;
     padding: 4px 0;
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid #333;
   }
 
   .venue-card-row:last-of-type { border-bottom: none; }
 
-  .venue-card-icon { flex-shrink: 0; width: 18px; text-align: center; color: var(--muted); }
+  .venue-card-icon { flex-shrink: 0; width: 18px; text-align: center; color: #999; }
 
   .venue-maps-btn {
     display: block;
     margin-top: 8px;
     padding: 9px;
-    background: var(--accent);
+    background: #e8c547;
     color: #000;
     text-align: center;
     border-radius: 8px;
@@ -735,7 +735,7 @@
   .list-empty {
     padding: 60px 20px;
     text-align: center;
-    color: var(--muted);
+    color: #999;
     font-size: 0.95rem;
   }
 
