@@ -877,6 +877,30 @@
     color: var(--text);
     padding: 8px 20px 16px;
     border-bottom: 1px solid var(--border);
+    position: relative;
+  }
+
+  .edit-close-btn {
+    position: absolute;
+    top: 8px;
+    right: 16px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    background: var(--surface2);
+    color: var(--muted);
+    font-size: 1.2rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+  }
+
+  .edit-close-btn:hover {
+    background: var(--border);
+    color: var(--text);
   }
 
   .edit-field {
@@ -1129,6 +1153,7 @@
 <div class="edit-drawer" id="editDrawer">
   <div class="edit-drawer-handle"></div>
   <div class="edit-drawer-title" id="editDrawerTitle">Edit venue</div>
+  <button class="edit-close-btn" id="editCloseBtn" title="Close">✕</button>
   <input type="hidden" id="editVenueId">
   <div class="edit-field"><label>Name</label><input type="text" id="editName"></div>
   <div class="edit-field"><label>Location</label><input type="text" id="editLocation"></div>
@@ -1369,15 +1394,28 @@ searchInput.addEventListener('input',function(){
     el.className='s-item';
     el.innerHTML='<div class="s-item-name"><div>'+v.name+'</div><div class="s-item-loc">'+v.location+'</div></div><span class="s-day-pill" style="background:'+(COLOURS[v.day]||'#888')+'">'+v.day.slice(0,3)+'</span>';
     el.addEventListener('click',function(){
-      map.setView([v.lat,v.lng],15);
       searchResults.style.display='none';
-      searchInput.value=v.name;
+      searchInput.value='';
       filter='';
+      
+      // Switch to map view if in list view
+      if(currentView === 'list') setView('map');
+      
       render();
-      for(var i=0;i<markers.length;i++){
-        var ll=markers[i].getLatLng();
-        if(Math.abs(ll.lat-v.lat)<0.0001&&Math.abs(ll.lng-v.lng)<0.0001){ markers[i].openPopup(); break; }
-      }
+      
+      // Center map on venue
+      map.setView([v.lat,v.lng],16);
+      
+      // Find and open the marker after a brief delay
+      setTimeout(function(){
+        for(var i=0;i<markers.length;i++){
+          var ll=markers[i].getLatLng();
+          if(Math.abs(ll.lat-v.lat)<0.00001&&Math.abs(ll.lng-v.lng)<0.00001){ 
+            markers[i].openPopup(); 
+            break; 
+          }
+        }
+      }, 400);
     });
     searchResults.appendChild(el);
   });
@@ -1722,6 +1760,7 @@ function closeEditDrawer() {
 }
 
 document.getElementById('editCancelBtn').addEventListener('click', closeEditDrawer);
+document.getElementById('editCloseBtn').addEventListener('click', closeEditDrawer);
 editBackdrop.addEventListener('click', closeEditDrawer);
 
 document.getElementById('editSaveBtn').addEventListener('click', function() {
