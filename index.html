@@ -1171,8 +1171,8 @@
     <div class="edit-field edit-field-full"><label>Location</label><input type="text" id="editLocation"></div>
     <div class="edit-field"><label>Day</label>
       <select id="editDay">
-        <option>MONDAY</option><option>TUESDAY</option><option>WEDNESDAY</option>
-        <option>THURSDAY</option><option>FRIDAY</option><option>SATURDAY</option><option>SUNDAY</option>
+        <option>Monday</option><option>Tuesday</option><option>Wednesday</option>
+        <option>Thursday</option><option>Friday</option><option>Saturday</option><option>Sunday</option>
       </select>
     </div>
     <div class="edit-field"><label>Start time</label><input type="text" id="editTime"></div>
@@ -1756,7 +1756,7 @@ function openEditDrawer(v) {
   document.getElementById('editVenueId').value = vid;
   document.getElementById('editName').value = v.name || '';
   document.getElementById('editLocation').value = v.location || '';
-  document.getElementById('editDay').value = v.day || 'MONDAY';
+  document.getElementById('editDay').value = v.day ? v.day.charAt(0) + v.day.slice(1).toLowerCase() : 'Monday';
   document.getElementById('editTime').value = v.time || '';
   document.getElementById('editFrequency').value = v.frequency || '';
   document.getElementById('editStyle').value = v.style || '';
@@ -1783,7 +1783,7 @@ document.getElementById('editSaveBtn').addEventListener('click', function() {
     venueId:   document.getElementById('editVenueId').value,
     name:      document.getElementById('editName').value.trim(),
     location:  document.getElementById('editLocation').value.trim(),
-    day:       document.getElementById('editDay').value,
+    day:       document.getElementById('editDay').value.toUpperCase(),
     startTime: document.getElementById('editTime').value.trim(),
     frequency: document.getElementById('editFrequency').value.trim(),
     style:     document.getElementById('editStyle').value.trim(),
