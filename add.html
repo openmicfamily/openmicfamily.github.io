@@ -34,6 +34,7 @@
     display: flex;
     align-items: center;
     gap: 12px;
+    position: relative;
   }
 
   header a {
@@ -43,6 +44,8 @@
     display: flex;
     align-items: center;
     gap: 6px;
+    position: absolute;
+    left: 20px;
   }
 
   header a:hover { color: var(--text); }
@@ -51,7 +54,7 @@
     font-family: 'DM Serif Display', serif;
     font-size: 1.3rem;
     color: var(--accent);
-    flex: 1;
+    width: 100%;
     text-align: center;
   }
 
@@ -163,7 +166,6 @@
 <header>
   <a href="/">← Back to map</a>
   <h1>Add an Open Mic</h1>
-  <div style="width:80px"></div>
 </header>
 
 <div class="container">
