@@ -2060,6 +2060,11 @@ function handleError(title, message) {
   loadingEl.style.pointerEvents = 'auto';
 }
 
+// Preserve admin parameter when navigating to /add
+if (isAdmin) {
+  document.getElementById('addVenueBtn').href = '/add?admin=true';
+}
+
 console.log('Sending XHR request...');
 xhr.send();
 </script>
