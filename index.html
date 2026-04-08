@@ -903,29 +903,40 @@
     color: var(--text);
   }
 
+  .edit-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 12px;
+    padding: 0 20px;
+  }
+
   .edit-field {
-    padding: 12px 20px 0;
+    padding: 8px 0 0;
+  }
+
+  .edit-field-full {
+    grid-column: 1 / -1;
   }
 
   .edit-field label {
     display: block;
-    font-size: 0.78rem;
+    font-size: 0.75rem;
     font-weight: 600;
     color: var(--muted);
     text-transform: uppercase;
     letter-spacing: 0.06em;
-    margin-bottom: 6px;
+    margin-bottom: 5px;
   }
 
   .edit-field input, .edit-field select {
     width: 100%;
-    padding: 10px 12px;
+    padding: 9px 11px;
     background: var(--surface2);
     border: 1.5px solid var(--border);
     border-radius: 10px;
     color: var(--text);
     font-family: 'DM Sans', sans-serif;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     outline: none;
   }
 
@@ -934,7 +945,7 @@
   .edit-actions {
     display: flex;
     gap: 10px;
-    padding: 16px 20px 8px;
+    padding: 12px 20px 8px;
   }
 
   .edit-save-btn {
@@ -1155,19 +1166,21 @@
   <div class="edit-drawer-title" id="editDrawerTitle">Edit venue</div>
   <button class="edit-close-btn" id="editCloseBtn" title="Close">✕</button>
   <input type="hidden" id="editVenueId">
-  <div class="edit-field"><label>Name</label><input type="text" id="editName"></div>
-  <div class="edit-field"><label>Location</label><input type="text" id="editLocation"></div>
-  <div class="edit-field"><label>Day</label>
-    <select id="editDay">
-      <option>MONDAY</option><option>TUESDAY</option><option>WEDNESDAY</option>
-      <option>THURSDAY</option><option>FRIDAY</option><option>SATURDAY</option><option>SUNDAY</option>
-    </select>
+  <div class="edit-grid">
+    <div class="edit-field edit-field-full"><label>Name</label><input type="text" id="editName"></div>
+    <div class="edit-field edit-field-full"><label>Location</label><input type="text" id="editLocation"></div>
+    <div class="edit-field"><label>Day</label>
+      <select id="editDay">
+        <option>MONDAY</option><option>TUESDAY</option><option>WEDNESDAY</option>
+        <option>THURSDAY</option><option>FRIDAY</option><option>SATURDAY</option><option>SUNDAY</option>
+      </select>
+    </div>
+    <div class="edit-field"><label>Start time</label><input type="text" id="editTime"></div>
+    <div class="edit-field"><label>Frequency</label><input type="text" id="editFrequency"></div>
+    <div class="edit-field"><label>Style</label><input type="text" id="editStyle"></div>
+    <div class="edit-field edit-field-full"><label>Equipment</label><input type="text" id="editEquipment"></div>
+    <div class="edit-field edit-field-full" style="padding-bottom:4px"><label>Notes</label><input type="text" id="editNotes"></div>
   </div>
-  <div class="edit-field"><label>Start time</label><input type="text" id="editTime"></div>
-  <div class="edit-field"><label>Frequency</label><input type="text" id="editFrequency"></div>
-  <div class="edit-field"><label>Style</label><input type="text" id="editStyle"></div>
-  <div class="edit-field"><label>Equipment</label><input type="text" id="editEquipment"></div>
-  <div class="edit-field" style="padding-bottom:4px"><label>Notes</label><input type="text" id="editNotes"></div>
   <div class="edit-actions">
     <button class="edit-cancel-btn" id="editCancelBtn">Cancel</button>
     <button class="edit-save-btn" id="editSaveBtn">Save changes</button>
