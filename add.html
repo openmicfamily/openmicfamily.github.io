@@ -325,9 +325,12 @@ var form = document.getElementById('venueForm');
 var submitBtn = document.getElementById('submitBtn');
 var result = document.getElementById('result');
 
-// Preserve admin parameter when going back to map
-if (window.location.search.indexOf('admin=true') !== -1) {
-  document.querySelector('header a[href="/"]').href = '/?admin=true';
+// Preserve admin and brand parameters when going back to map
+var params = [];
+if (window.location.search.indexOf('admin=true') !== -1) params.push('admin=true');
+if (window.location.search.indexOf('brand=family') !== -1) params.push('brand=family');
+if (params.length) {
+  document.querySelector('header a[href="/"]').href = '/?' + params.join('&');
 }
 
 // Show email as required when Host is selected
