@@ -1744,6 +1744,12 @@ function toggleDayGroup(header) {
 var isAdmin = window.location.search.indexOf('admin=true') !== -1;
 if (isAdmin) document.body.classList.add('admin-mode');
 
+// Branding switcher - ?brand=family changes to "Open Mic Family"
+if (window.location.search.indexOf('brand=family') !== -1) {
+  document.querySelector('header h1').innerHTML = 'Open Mic <em>Family</em>';
+  document.querySelector('#loading h2').innerHTML = 'Open Mic <em>Family</em>';
+}
+
 var editDrawer = document.getElementById('editDrawer');
 var editBackdrop = document.getElementById('editBackdrop');
 var currentEditVenue = null;
@@ -2064,9 +2070,12 @@ function handleError(title, message) {
   loadingEl.style.pointerEvents = 'auto';
 }
 
-// Preserve admin parameter when navigating to /add
-if (isAdmin) {
-  document.getElementById('addVenueBtn').href = '/add?admin=true';
+// Preserve admin and brand parameters when navigating to /add
+var params = [];
+if (isAdmin) params.push('admin=true');
+if (window.location.search.indexOf('brand=family') !== -1) params.push('brand=family');
+if (params.length) {
+  document.getElementById('addVenueBtn').href = '/add?' + params.join('&');
 }
 
 console.log('Sending XHR request...');
