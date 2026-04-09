@@ -594,6 +594,9 @@
     overflow-y: auto;
     display: none;
     background: #0f0f0f;
+    max-width: 700px;
+    margin: 0 auto;
+    width: 100%;
   }
 
   .list-day-header {
@@ -1715,6 +1718,7 @@ function renderList() {
         '<div class="venue-card-body">' +
           bodyRows +
           '<a class="venue-maps-btn" href="' + mapsUrl + '" target="_blank" onclick="event.stopPropagation()">Open in Google Maps →</a>' +
+          '<button class="admin-edit-btn" onclick="event.stopPropagation(); openEditDrawer(\'' + v.id + '\')">Edit this venue</button>' +
         '</div>' +
       '</div>';
     });
